@@ -24,6 +24,9 @@ vim.opt.inccommand = 'split'       -- Preview substitutions live
 vim.opt.cursorline = true          -- Highlight current line
 vim.opt.scrolloff = 10             -- Keep 10 lines above/below cursor
 vim.opt.clipboard = 'unnamedplus'  -- Sync system clipboard
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
 
 -- Basic Keymaps
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
