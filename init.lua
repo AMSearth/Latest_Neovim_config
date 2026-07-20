@@ -7,6 +7,8 @@ vim.g.maplocalleader = ' '
 -- Essential Editor Options
 vim.opt.number = true              -- Show line numbers
 vim.opt.relativenumber = true      -- Show relative line numbers
+vim.opt.wrap = false
+vim.opt.linebreak = true
 vim.opt.mouse = 'a'                -- Enable mouse mode
 vim.opt.showmode = false           -- Don't show mode in command line
 vim.opt.breakindent = true         -- Enable break indent
