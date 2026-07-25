@@ -27,6 +27,9 @@ This setup ditches third-party package managers (like Lazy, Packer, or Plug) in 
 1. **Backup your existing config before trying new config:**
    ```bash
    mv ~/.config/nvim ~/.config/nvim.bak
+1. **Git Clone in your .config/nvim dir**
+   ```bash
+   git clone https://github.com/AMSearth/Latest_Neovim_config.git
 
 ## ⌨️ Keybindings
 
