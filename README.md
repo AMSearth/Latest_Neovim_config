@@ -24,6 +24,32 @@ This setup ditches third-party package managers (like Lazy, Packer, or Plug) in 
 
 ## 🚀 Installation
 
-1. **Backup your existing config:**
+1. **Backup your existing config before trying new config:**
    ```bash
    mv ~/.config/nvim ~/.config/nvim.bak
+
+## ⌨️ Keybindings
+
+The `<Leader>` key is set to **Space**.
+
+| Keybinding | Action | Mode |
+| :--- | :--- | :--- |
+| `<Space> s f` | Search Files (including hidden files) | Normal |
+| `<Space> s g` | Live Grep / Search Text (including hidden files) | Normal |
+| `<Space> s w` | Search Current Word under cursor | Normal |
+| `<Space> s h` | Search Help Tags | Normal |
+| `<Space> s k` | Search Keymaps | Normal |
+| `<Space> s d` | Search Diagnostics | Normal |
+| `<Space> <Space>` | Find Existing Buffers | Normal |
+| `<Space> q` | Open Diagnostic Quickfix List | Normal |
+| `<Space> r n` | LSP: Rename Variable | Normal |
+| `<Space> c a` | LSP: Code Action | Normal |
+| `g d` | LSP: Go to Definition | Normal |
+| `g r` | LSP: Go to References | Normal |
+| `g I` | LSP: Go to Implementation | Normal |
+| `K` | LSP: Hover Documentation | Normal |
+| `<Esc>` | Clear Search Highlights | Normal |
+| `<C-n>` / `<C-p>`| Navigate Auto-complete Menu (Next/Prev) | Insert |
+| `<C-b>` / `<C-f>`| Scroll Auto-complete Documentation | Insert |
+| `<C-y>` | Accept Auto-complete Suggestion | Insert |
+| `<C-Space>` | Trigger Auto-complete Manually | Insert |
