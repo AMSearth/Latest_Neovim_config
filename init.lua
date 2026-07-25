@@ -71,6 +71,25 @@ vim.cmd.colorscheme('tokyonight-moon')
 -- ------------------------------------------------------------------------
 local telescope = require('telescope')
 telescope.setup({
+	-- Tell Telescope to include hidden files in its searches
+  pickers = {
+    find_files = {
+      hidden = true,
+    },
+  },
+  defaults = {
+    vimgrep_arguments = {
+      "rg",
+      "--color=never",
+      "--no-heading",
+      "--with-filename",
+      "--line-number",
+      "--column",
+      "--smart-case",
+      "--hidden",        -- Search hidden files for Live Grep
+      "--glob=!.git/*",  -- ...but keep ignoring the .git folder!
+    },
+  },
   extensions = {
     ['ui-select'] = {
       require('telescope.themes').get_dropdown(),
