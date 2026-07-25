@@ -53,6 +53,7 @@ vim.pack.add({
   'https://github.com/hrsh7th/cmp-path',
   'https://github.com/L3MON4D3/LuaSnip',
   'https://github.com/saadparwaiz1/cmp_luasnip',
+  'https://github.com/windwp/nvim-autopairs',
 })
 
 
@@ -156,6 +157,18 @@ cmp.setup({
     { name = 'path' },
   },
 })
+
+-- ------------------------------------------------------------------------
+-- Auto-pairing: nvim-autopairs
+-- ------------------------------------------------------------------------
+require('nvim-autopairs').setup({
+  check_ts = true, -- Use treesitter to check for a pair
+})
+
+-- Automatically add `(` after selecting a function or method from nvim-cmp
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+local cmp = require('cmp')
+cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
 -- ==========================================================================
 -- END OF CONFIG
 -- ==========================================================================
