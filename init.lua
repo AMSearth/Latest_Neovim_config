@@ -10,14 +10,14 @@ vim.opt.relativenumber = true      -- Show relative line numbers
 vim.opt.wrap = false
 vim.opt.linebreak = true
 vim.opt.mouse = 'a'                -- Enable mouse mode
-vim.opt.showmode = false           -- Don't show mode in command line
+vim.opt.showmode = false           -- Don't show mode in command line (handled by statusline)
 vim.opt.breakindent = true         -- Enable break indent
 vim.opt.undofile = true            -- Save undo history
 vim.opt.ignorecase = true          -- Case-insensitive searching
 vim.opt.smartcase = true           -- Case-sensitive if capital letter included
 vim.opt.signcolumn = 'yes'         -- Always show the signcolumn
 vim.opt.updatetime = 250           -- Decrease update time
-vim.opt.timeoutlen = 1000           -- Decrease mapped sequence wait time
+vim.opt.timeoutlen = 1000          -- Decrease mapped sequence wait time
 vim.opt.splitright = true          -- Split windows to the right
 vim.opt.splitbelow = true          -- Split windows to the bottom
 vim.opt.list = true                -- Show some invisible characters
@@ -33,6 +33,15 @@ vim.opt.softtabstop = 4
 -- Basic Keymaps
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+-- Highlight when yanking (copying) text
+vim.api.nvim_create_autocmd('TextYankPost', {
+  desc = 'Highlight when yanking (copying) text',
+  group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+  callback = function()
+    vim.hl.on_yank()
+  end,
+})
 
 
 -- ==========================================================================
@@ -54,6 +63,9 @@ vim.pack.add({
   'https://github.com/L3MON4D3/LuaSnip',
   'https://github.com/saadparwaiz1/cmp_luasnip',
   'https://github.com/windwp/nvim-autopairs',
+  'https://github.com/echasnovski/mini.icons',
+  'https://github.com/echasnovski/mini.statusline',
+  'https://github.com/lewis6991/gitsigns.nvim',
 })
 
 
@@ -67,11 +79,130 @@ vim.pack.add({
 vim.cmd.colorscheme('tokyonight-moon') 
 
 -- ------------------------------------------------------------------------
+-- Icons & Statusline: mini.icons & mini.statusline
+-- ------------------------------------------------------------------------
+require('mini.icons').setup()
+
+local mode_icons = {
+  ['n']     = '󰋜 NORMAL',
+  ['no']    = '󰋜 N-OPERATOR',
+  ['nov']   = '󰋜 N-OPERATOR',
+  ['noV']   = '󰋜 N-OPERATOR',
+  ['no\22'] = '󰋜 N-OPERATOR',
+  ['niI']   = '󰋜 NORMAL',
+  ['niR']   = '󰋜 NORMAL',
+  ['niV']   = '󰋜 NORMAL',
+  ['nt']    = '󰋜 NORMAL',
+  ['ntT']   = '󰋜 NORMAL',
+  ['v']     = '󰈈 VISUAL',
+  ['vs']    = '󰈈 VISUAL',
+  ['V']     = '󰈈 V-LINE',
+  ['Vs']    = '󰈈 V-LINE',
+  ['\22']   = '󰈈 V-BLOCK',
+  ['\22s']  = '󰈈 V-BLOCK',
+  ['s']     = '󰈈 SELECT',
+  ['S']     = '󰈈 S-LINE',
+  ['\19']   = '󰈈 S-BLOCK',
+  ['i']     = '󰏫 INSERT',
+  ['ic']    = '󰏫 INSERT',
+  ['ix']    = '󰏫 INSERT',
+  ['R']     = '󰛔 REPLACE',
+  ['Rc']    = '󰛔 REPLACE',
+  ['Rx']    = '󰛔 REPLACE',
+  ['Rv']    = '󰛔 V-REPLACE',
+  ['Rvc']   = '󰛔 V-REPLACE',
+  ['Rvx']   = '󰛔 V-REPLACE',
+  ['c']     = '󰞷 COMMAND',
+  ['cv']    = '󰞷 EX',
+  ['ce']    = '󰞷 EX',
+  ['r']     = '󰛔 PROMPT',
+  ['rm']    = '󰛔 MORE',
+  ['r?']    = '󰛔 CONFIRM',
+  ['!']     = ' SHELL',
+  ['t']     = ' TERMINAL',
+}
+
+local statusline = require('mini.statusline')
+statusline.setup({
+  use_icons = true,
+  content = {
+    active = function()
+      local mode, mode_hl = statusline.section_mode({ trunc_width = 120 })
+      local raw_mode = vim.api.nvim_get_mode().mode
+      local custom_mode = mode_icons[raw_mode] or (raw_mode:upper())
+
+      local git           = statusline.section_git({ trunc_width = 40 })
+      local diff          = statusline.section_diff({ trunc_width = 75 })
+      local diagnostics   = statusline.section_diagnostics({ trunc_width = 75 })
+      local filename      = statusline.section_filename({ trunc_width = 140 })
+      local fileinfo      = statusline.section_fileinfo({ trunc_width = 120 })
+      local location      = statusline.section_location({ trunc_width = 75 })
+
+      return statusline.combine_groups({
+        { hl = mode_hl, strings = { custom_mode } },
+        { hl = 'MiniStatuslineDevinfo', strings = { git, diff, diagnostics } },
+        '%<',
+        { hl = 'MiniStatuslineFilename', strings = { filename } },
+        '%=',
+        { hl = 'MiniStatuslineFileinfo', strings = { fileinfo } },
+        { hl = mode_hl, strings = { location } },
+      })
+    end,
+  },
+})
+
+-- ------------------------------------------------------------------------
+-- Git Status Signs: gitsigns.nvim
+-- ------------------------------------------------------------------------
+require('gitsigns').setup({
+  signs = {
+    add          = { text = '┃' },
+    change       = { text = '┃' },
+    delete       = { text = '_' },
+    topdelete    = { text = '‾' },
+    changedelete = { text = '~' },
+    untracked    = { text = '┆' },
+  },
+  on_attach = function(bufnr)
+    local gitsigns = require('gitsigns')
+
+    local function map(mode, l, r, opts)
+      opts = opts or {}
+      opts.buffer = bufnr
+      vim.keymap.set(mode, l, r, opts)
+    end
+
+    -- Navigation between git change hunks
+    map('n', ']c', function()
+      if vim.wo.diff then
+        vim.cmd.normal({ ']c', bang = true })
+      else
+        gitsigns.nav_hunk('next')
+      end
+    end, { desc = 'Jump to next git change' })
+
+    map('n', '[c', function()
+      if vim.wo.diff then
+        vim.cmd.normal({ '[c', bang = true })
+      else
+        gitsigns.nav_hunk('prev')
+      end
+    end, { desc = 'Jump to previous git change' })
+
+    -- Hunk Actions
+    map('n', '<leader>hp', gitsigns.preview_hunk, { desc = 'Git [H]unk [P]review' })
+    map('n', '<leader>hb', gitsigns.blame_line, { desc = 'Git [H]unk [B]lame line' })
+    map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'Git [H]unk [S]tage' })
+    map('n', '<leader>hr', gitsigns.reset_hunk, { desc = 'Git [H]unk [R]eset' })
+  end,
+})
+
+-- ------------------------------------------------------------------------
 -- File Searching: Telescope
 -- ------------------------------------------------------------------------
 local telescope = require('telescope')
 telescope.setup({
-	-- Tell Telescope to include hidden files in its searches
+  -- Tell Telescope to include hidden files in its searches
   pickers = {
     find_files = {
       hidden = true,
@@ -107,6 +238,7 @@ vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]re
 vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
 vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
+-- ------------------------------------------------------------------------
 -- LSP Configuration & Mason (Language Servers) - v2.0+ Compatible
 -- ------------------------------------------------------------------------
 require('mason').setup()
@@ -149,6 +281,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
   end,
 })
+
 -- ------------------------------------------------------------------------
 -- Auto-completion: nvim-cmp
 -- ------------------------------------------------------------------------
@@ -186,8 +319,9 @@ require('nvim-autopairs').setup({
 
 -- Automatically add `(` after selecting a function or method from nvim-cmp
 local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-local cmp = require('cmp')
 cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+
 -- ==========================================================================
 -- END OF CONFIG
 -- ==========================================================================
+

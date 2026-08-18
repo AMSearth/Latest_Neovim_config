@@ -8,7 +8,8 @@ This setup ditches third-party package managers (like Lazy, Packer, or Plug) in 
 
 * **Zero-Dependency Bootstrap:** Uses native `vim.pack.add` to clone and load plugins directly via Git.
 * **Single File:** Everything is contained within a single `init.lua` file.
-* **Aesthetics:** [Tokyo Night (Moon)](https://github.com/folke/tokyonight.nvim) theme enabled by default.
+* **Aesthetics & Statusline:** [Tokyo Night (Moon)](https://github.com/folke/tokyonight.nvim) theme paired with [mini.icons](https://github.com/echasnovski/mini.icons) & [mini.statusline](https://github.com/echasnovski/mini.statusline) rendering custom mode icons (`󰋜 NORMAL`, `󰏫 INSERT`, `󰈈 VISUAL`, `󰞷 COMMAND`, ` TERMINAL`).
+* **Git Integration:** [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) for gutter change indicators, hunk navigation, blame popups, and hunk previews.
 * **Fuzzy Finding:** [Telescope](https://github.com/nvim-telescope/telescope.nvim) configured for lightning-fast file and text searching.
 * **Syntax Highlighting:** Leverages Neovim 0.12's native Treesitter parsing (no third-party TS plugin required!).
 * **Intelligent Auto-completion:** [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) integrated with LuaSnip and LSP sources.
@@ -20,16 +21,18 @@ This setup ditches third-party package managers (like Lazy, Packer, or Plug) in 
 * **Git** (for cloning plugins).
 * **Ripgrep (`rg`)** (Required for Telescope live grep).
 * **fd** (Recommended for Telescope file finding).
-* A **Nerd Font** (Optional, but recommended for icons).
+* A **Nerd Font** (Recommended for mode icons and statusline filetype glyphs).
 
 ## 🚀 Installation
 
 1. **Backup your existing config before trying new config:**
    ```bash
    mv ~/.config/nvim ~/.config/nvim.bak
-1. **Git Clone in your .config/nvim dir**
+   ```
+2. **Git Clone in your .config/nvim dir:**
    ```bash
    git clone https://github.com/AMSearth/Latest_Neovim_config.git
+   ```
 
 ## ⌨️ Keybindings
 
@@ -51,8 +54,14 @@ The `<Leader>` key is set to **Space**.
 | `g r` | LSP: Go to References | Normal |
 | `g I` | LSP: Go to Implementation | Normal |
 | `K` | LSP: Hover Documentation | Normal |
+| `]c` / `[c` | Jump to Next / Previous Git Hunk | Normal |
+| `<Space> h p` | Git Hunk Preview | Normal |
+| `<Space> h b` | Git Hunk Line Blame | Normal |
+| `<Space> h s` | Git Hunk Stage | Normal |
+| `<Space> h r` | Git Hunk Reset | Normal |
 | `<Esc>` | Clear Search Highlights | Normal |
 | `<C-n>` / `<C-p>`| Navigate Auto-complete Menu (Next/Prev) | Insert |
 | `<C-b>` / `<C-f>`| Scroll Auto-complete Documentation | Insert |
 | `<C-y>` | Accept Auto-complete Suggestion | Insert |
 | `<C-Space>` | Trigger Auto-complete Manually | Insert |
+
