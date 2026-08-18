@@ -298,6 +298,19 @@ vim.lsp.config('lua_ls', {
   },
 })
 
+vim.lsp.config('clangd', {
+  cmd = {
+    'clangd',
+    '--background-index',
+    '--clang-tidy',
+    '--header-insertion=iwyu',
+    '--completion-style=detailed',
+    '--function-arg-placeholders',
+    '--fallback-style=llvm',
+    '--query-driver=/usr/bin/g++,/usr/bin/c++,/usr/bin/clang++,/usr/bin/*g++',
+  },
+})
+
 -- 3. Initialize mason-lspconfig
 -- In v2.0+, this automatically enables any server you install via Mason!
 -- No setup_handlers required.
