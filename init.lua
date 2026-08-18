@@ -312,6 +312,7 @@ vim.lsp.config('clangd', {
     '--completion-style=detailed',
     '--function-arg-placeholders',
     '--fallback-style=llvm',
+    '--enable-config',
     '--query-driver=/usr/bin/g++,/usr/bin/c++,/usr/bin/clang++,/usr/bin/*g++',
   },
 })
