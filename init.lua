@@ -1,3 +1,8 @@
+-- Enable Neovim fast Lua bytecode loader cache
+if vim.loader then
+  vim.loader.enable()
+end
+
 -- ==========================================================================
 -- 1. BASIC SETTINGS & LEADER KEY
 -- ==========================================================================
@@ -17,7 +22,7 @@ vim.opt.ignorecase = true          -- Case-insensitive searching
 vim.opt.smartcase = true           -- Case-sensitive if capital letter included
 vim.opt.signcolumn = 'yes'         -- Always show the signcolumn
 vim.opt.updatetime = 250           -- Decrease update time
-vim.opt.timeoutlen = 1000          -- Decrease mapped sequence wait time
+vim.opt.timeoutlen = 300           -- Fast mapped sequence wait time (300ms for instant leader response)
 vim.opt.splitright = true          -- Split windows to the right
 vim.opt.splitbelow = true          -- Split windows to the bottom
 vim.opt.list = true                -- Show some invisible characters
@@ -336,12 +341,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
 -- Auto-completion: nvim-cmp
 -- ------------------------------------------------------------------------
 local cmp = require('cmp')
-local luasnip = require('luasnip')
 
 cmp.setup({
   snippet = {
     expand = function(args)
-      luasnip.lsp_expand(args.body)
+      require('luasnip').lsp_expand(args.body)
     end,
   },
   completion = { completeopt = 'menu,menuone,noinsert' },
