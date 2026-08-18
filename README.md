@@ -9,11 +9,12 @@ This setup ditches third-party package managers (like Lazy, Packer, or Plug) in 
 * **Zero-Dependency Bootstrap:** Uses native `vim.pack.add` to clone and load plugins directly via Git.
 * **Single File:** Everything is contained within a single `init.lua` file.
 * **Aesthetics & Statusline:** [Tokyo Night (Moon)](https://github.com/folke/tokyonight.nvim) theme paired with [mini.icons](https://github.com/echasnovski/mini.icons) & [mini.statusline](https://github.com/echasnovski/mini.statusline) rendering custom mode icons (`󰋜 NORMAL`, `󰏫 INSERT`, `󰈈 VISUAL`, `󰞷 COMMAND`, ` TERMINAL`).
+* **Keymap Discovery:** [which-key.nvim](https://github.com/folke/which-key.nvim) interactive popup helper for discovering leader keybindings.
 * **Git Integration:** [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) for gutter change indicators, hunk navigation, blame popups, and hunk previews.
 * **Fuzzy Finding:** [Telescope](https://github.com/nvim-telescope/telescope.nvim) configured for lightning-fast file and text searching.
 * **Syntax Highlighting:** Leverages Neovim 0.12's native Treesitter parsing (no third-party TS plugin required!).
 * **Intelligent Auto-completion:** [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) integrated with LuaSnip and LSP sources.
-* **LSP & Tooling:** [Mason](https://github.com/williamboman/mason.nvim) and `mason-lspconfig` (v2.0+) natively integrated via the new `vim.lsp.config` API for zero-friction language server setups.
+* **LSP & Tooling:** [Mason](https://github.com/williamboman/mason.nvim) and `mason-lspconfig` (v2.0+) natively integrated via the new `vim.lsp.config` API with custom diagnostic icons (`󰅚` Error, `󰀦` Warn, `󰋼` Info, `󰌵` Hint).
 
 ## 📋 Requirements
 
@@ -21,7 +22,7 @@ This setup ditches third-party package managers (like Lazy, Packer, or Plug) in 
 * **Git** (for cloning plugins).
 * **Ripgrep (`rg`)** (Required for Telescope live grep).
 * **fd** (Recommended for Telescope file finding).
-* A **Nerd Font** (Recommended for mode icons and statusline filetype glyphs).
+* A **Nerd Font** (Recommended for mode icons, diagnostic signs, and statusline filetype glyphs).
 
 ## 🚀 Installation
 
@@ -40,6 +41,7 @@ The `<Leader>` key is set to **Space**.
 
 | Keybinding | Action | Mode |
 | :--- | :--- | :--- |
+| `<C-h>` / `<C-j>` / `<C-k>` / `<C-l>` | Move window focus Left / Down / Up / Right | Normal |
 | `<Space> s f` | Search Files (including hidden files) | Normal |
 | `<Space> s g` | Live Grep / Search Text (including hidden files) | Normal |
 | `<Space> s w` | Search Current Word under cursor | Normal |
@@ -64,4 +66,5 @@ The `<Leader>` key is set to **Space**.
 | `<C-b>` / `<C-f>`| Scroll Auto-complete Documentation | Insert |
 | `<C-y>` | Accept Auto-complete Suggestion | Insert |
 | `<C-Space>` | Trigger Auto-complete Manually | Insert |
+
 

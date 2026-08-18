@@ -34,6 +34,12 @@ vim.opt.softtabstop = 4
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- Seamless Window Navigation Mappings (<C-h>, <C-j>, <C-k>, <C-l>)
+vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
 -- Highlight when yanking (copying) text
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
@@ -66,6 +72,7 @@ vim.pack.add({
   'https://github.com/echasnovski/mini.icons',
   'https://github.com/echasnovski/mini.statusline',
   'https://github.com/lewis6991/gitsigns.nvim',
+  'https://github.com/folke/which-key.nvim',
 })
 
 
@@ -74,9 +81,39 @@ vim.pack.add({
 -- ==========================================================================
 
 -- ------------------------------------------------------------------------
+-- Keymap Popup & Hints: which-key.nvim
+-- ------------------------------------------------------------------------
+local wk = require('which-key')
+wk.setup({
+  delay = 300,
+})
+wk.add({
+  { '<leader>s', group = '[S]earch' },
+  { '<leader>r', group = '[R]ename' },
+  { '<leader>c', group = '[C]ode' },
+  { '<leader>h', group = 'Git [H]unk' },
+})
+
+-- ------------------------------------------------------------------------
 -- Theme: Tokyo Night
 -- ------------------------------------------------------------------------
 vim.cmd.colorscheme('tokyonight-moon') 
+
+-- ------------------------------------------------------------------------
+-- Custom LSP Diagnostic Signs & UI
+-- ------------------------------------------------------------------------
+vim.diagnostic.config({
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = '󰅚 ',
+      [vim.diagnostic.severity.WARN]  = '󰀦 ',
+      [vim.diagnostic.severity.INFO]  = '󰋼 ',
+      [vim.diagnostic.severity.HINT]  = '󰌵 ',
+    },
+  },
+  virtual_text = true,
+  severity_sort = true,
+})
 
 -- ------------------------------------------------------------------------
 -- Icons & Statusline: mini.icons & mini.statusline
