@@ -94,6 +94,16 @@ The `<Leader>` key is set to **`<Space>`**.
 | `<Space> s d` | Search Workspace Diagnostics | Normal |
 | `<Space> <Space>` | Switch between open buffers | Normal |
 
+### 🤖 Autocompletion (Insert Mode)
+
+| Keybinding | Action | Mode |
+| :--- | :--- | :--- |
+| `<C-y>` | **Accept & Confirm** autocompletion suggestion | Insert |
+| `<C-n>` | Select **Next** suggestion item in popup menu | Insert |
+| `<C-p>` | Select **Previous** suggestion item in popup menu | Insert |
+| `<C-b>` / `<C-f>` | Scroll documentation window Up / Down | Insert |
+| `<C-Space>` | Trigger autocompletion menu manually | Insert |
+
 ### 🧠 LSP & Code Tools
 
 | Keybinding | Action | Mode |
@@ -103,7 +113,7 @@ The `<Leader>` key is set to **`<Space>`**.
 | `g I` | Go to Implementation | Normal |
 | `K` | Display Hover Documentation | Normal |
 | `<Space> r n` | Rename Symbol | Normal |
-| `<Space> c a` | Code Action | Normal |
+| `<Space> c a` | Code Action (Select & Apply LSP quick-fix suggestions) | Normal |
 
 ### 🌿 Git Hunks (`gitsigns`)
 
