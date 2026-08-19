@@ -100,8 +100,15 @@ wk.add({
 })
 
 -- ------------------------------------------------------------------------
--- Theme: Tokyo Night
+-- Theme: Tokyo Night (with Terminal Transparency)
 -- ------------------------------------------------------------------------
+require('tokyonight').setup({
+  transparent = true,
+  styles = {
+    sidebars = 'transparent',
+    floats = 'transparent',
+  },
+})
 vim.cmd.colorscheme('tokyonight-moon') 
 
 -- ------------------------------------------------------------------------
