@@ -324,6 +324,22 @@ vim.lsp.config('clangd', {
   },
 })
 
+vim.lsp.config('harper_ls', {
+  filetypes = { 'markdown', 'text', 'plaintext', 'gitcommit' },
+  settings = {
+    ['harper-ls'] = {
+      userDictPath = '~/dict.txt',
+      linters = {
+        spell_check = true,
+        an_a = true,
+        sentence_capitalization = true,
+        repeated_words = true,
+        long_sentences = true,
+      },
+    },
+  },
+})
+
 -- 3. Initialize mason-lspconfig
 -- In v2.0+, this automatically enables any server you install via Mason!
 -- No setup_handlers required.
