@@ -78,6 +78,7 @@ vim.pack.add({
   'https://github.com/echasnovski/mini.statusline',
   'https://github.com/lewis6991/gitsigns.nvim',
   'https://github.com/folke/which-key.nvim',
+  'https://github.com/nvim-tree/nvim-tree.lua',
 })
 
 
@@ -93,6 +94,7 @@ wk.setup({
   delay = 300,
 })
 wk.add({
+  { '<leader>e', desc = 'Toggle File [E]xplorer' },
   { '<leader>s', group = '[S]earch' },
   { '<leader>r', group = '[R]ename' },
   { '<leader>c', group = '[C]ode' },
@@ -131,6 +133,47 @@ vim.diagnostic.config({
 -- Icons & Statusline: mini.icons & mini.statusline
 -- ------------------------------------------------------------------------
 require('mini.icons').setup()
+require('mini.icons').mock_nvim_web_devicons()
+
+-- ------------------------------------------------------------------------
+-- File Explorer: nvim-tree (VS Code-like sidebar)
+-- ------------------------------------------------------------------------
+-- Disable netrw for nvim-tree
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+require('nvim-tree').setup({
+  view = {
+    width = 34,
+    side = 'left',
+  },
+  renderer = {
+    highlight_git = true,
+    icons = {
+      show = {
+        file = true,
+        folder = true,
+        folder_arrow = true,
+        git = true,
+      },
+    },
+  },
+  filters = {
+    dotfiles = false,
+    custom = { '^.git$' },
+  },
+  update_focused_file = {
+    enable = true,
+    update_root = false,
+  },
+  git = {
+    enable = true,
+    ignore = false,
+  },
+})
+
+-- <Space> e to toggle VS Code-like file explorer
+vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle File [E]xplorer' })
 
 local mode_icons = {
   ['n']     = '󰋜 NORMAL',
@@ -250,24 +293,91 @@ require('gitsigns').setup({
 -- File Searching: Telescope
 -- ------------------------------------------------------------------------
 local telescope = require('telescope')
+local previewers = require('telescope.previewers')
+
+-- Prevent previewing large files or binaries (avoids memory exhaustion / crashes)
+local _bad_extensions = {
+  'sqlite3', 'db', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'zip', 'tar',
+  'gz', '7z', 'rar', 'pyc', 'so', 'dylib', 'dll', 'woff', 'woff2', 'ttf',
+  'eot', 'mp4', 'mp3', 'mkv', 'avi', 'mov', 'iso', 'bin', 'exe'
+}
+
+local safe_previewer_maker = function(filepath, bufnr, opts)
+  opts = opts or {}
+  filepath = vim.fn.expand(filepath)
+
+  -- Check file extension against binary blacklist
+  local ext = string.match(filepath, '%.([a-zA-Z0-9]+)$')
+  if ext and vim.tbl_contains(_bad_extensions, string.lower(ext)) then
+    return
+  end
+
+  -- Check file size (limit previews to 100KB to prevent memory exhaustion)
+  vim.loop.fs_stat(filepath, function(_, stat)
+    if not stat or stat.size > 100000 then
+      return
+    else
+      previewers.buffer_previewer_maker(filepath, bufnr, opts)
+    end
+  end)
+end
+
+-- Detect fd / fdfind executable
+local fd_cmd = vim.fn.executable('fd') == 1 and 'fd' or (vim.fn.executable('fdfind') == 1 and 'fdfind' or nil)
+local find_files_cmd = nil
+if fd_cmd then
+  find_files_cmd = {
+    fd_cmd,
+    '--type', 'f',
+    '--hidden',
+    '--exclude', '.git',
+    '--exclude', '.venv',
+    '--exclude', 'venv',
+    '--exclude', 'env',
+    '--exclude', 'node_modules',
+    '--exclude', '__pycache__',
+    '--exclude', '*.sqlite3',
+    '--exclude', '*.pyc',
+  }
+end
+
 telescope.setup({
-  -- Tell Telescope to include hidden files in its searches
+  defaults = {
+    buffer_previewer_maker = safe_previewer_maker,
+    file_ignore_patterns = {
+      '%.git/',
+      'venv/.*',
+      '%.venv/.*',
+      'env/.*',
+      'node_modules/.*',
+      '__pycache__/.*',
+      '%.sqlite3',
+      '%.db',
+      '%.pyc',
+      'staticfiles/.*',
+      'media/.*',
+    },
+    vimgrep_arguments = {
+      'rg',
+      '--color=never',
+      '--no-heading',
+      '--with-filename',
+      '--line-number',
+      '--column',
+      '--smart-case',
+      '--hidden',
+      '--glob=!.git/*',
+      '--glob=!venv/*',
+      '--glob=!.venv/*',
+      '--glob=!node_modules/*',
+      '--glob=!__pycache__/*',
+      '--glob=!*.sqlite3',
+    },
+  },
   pickers = {
     find_files = {
       hidden = true,
-    },
-  },
-  defaults = {
-    vimgrep_arguments = {
-      "rg",
-      "--color=never",
-      "--no-heading",
-      "--with-filename",
-      "--line-number",
-      "--column",
-      "--smart-case",
-      "--hidden",        -- Search hidden files for Live Grep
-      "--glob=!.git/*",  -- ...but keep ignoring the .git folder!
+      find_command = find_files_cmd,
     },
   },
   extensions = {
@@ -306,6 +416,19 @@ vim.lsp.config('lua_ls', {
   settings = {
     Lua = {
       diagnostics = { globals = { 'vim' } },
+    },
+  },
+})
+
+vim.lsp.config('pyright', {
+  settings = {
+    python = {
+      analysis = {
+        autoSearchPaths = true,
+        useLibraryCodeForTypes = true,
+        diagnosticMode = 'openFilesOnly',
+        ignore = { 'venv', '.venv', 'env', 'node_modules', '__pycache__' },
+      },
     },
   },
 })

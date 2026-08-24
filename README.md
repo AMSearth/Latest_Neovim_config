@@ -29,10 +29,11 @@
 
 - **🚀 Zero-Dependency Bootstrap:** Powered by Neovim's brand new built-in `vim.pack.add` API — no third-party package managers (Lazy/Packer/Plug) required.
 - **📄 Single File Architecture:** Everything is cleanly organized inside a single, transparent [`init.lua`](file:///home/ajinkya/.config/nvim/init.lua).
+- **📁 VS Code-style File Explorer:** [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua) sidebar for visual project browsing, file creation/renaming/deletion, and Git status indicators.
 - **🎨 Modern Aesthetics:** [Tokyo Night (Moon)](https://github.com/folke/tokyonight.nvim) theme paired with [mini.icons](https://github.com/echasnovski/mini.icons) & [mini.statusline](https://github.com/echasnovski/mini.statusline) rendering mode icons (`󰋜 NORMAL`, `󰏫 INSERT`, `󰈈 VISUAL`, `󰞷 COMMAND`, ` TERMINAL`).
 - **💡 Keymap Helper Popup:** [which-key.nvim](https://github.com/folke/which-key.nvim) interactive popup helper for discovering leader keybindings on the fly.
 - **🌿 Git Integration:** [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) for gutter change indicators, hunk navigation (`]c`/`[c`), line blame popups, and hunk previews.
-- **🔍 Fast Fuzzy Finding:** [Telescope](https://github.com/nvim-telescope/telescope.nvim) configured to find files, live grep text (including hidden files), search help, and switch buffers.
+- **🔍 Fast Fuzzy Finding:** [Telescope](https://github.com/nvim-telescope/telescope.nvim) configured to find files, live grep text (including hidden files with safe binary/size filtering), search help, and switch buffers.
 - **⚡ Native Treesitter & LSP:** Built-in Neovim 0.12 Treesitter syntax parsing + [Mason](https://github.com/williamboman/mason.nvim) LSP integration with custom diagnostic signs (`󰅚` Error, `󰀦` Warn, `󰋼` Info, `󰌵` Hint) and `--query-driver` support for C/C++ (`clangd`).
 - **⌨️ Intelligent Autocompletion:** [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) with LuaSnip snippet engine, LSP sources, path completion, and auto-pairing (`nvim-autopairs`).
 
@@ -78,9 +79,24 @@ The `<Leader>` key is set to **`<Space>`**.
 
 | Keybinding | Action | Mode |
 | :--- | :--- | :--- |
+| `<Space> e` | **Toggle File Explorer** (`nvim-tree` sidebar) | Normal |
 | `<C-h>` / `<C-j>` / `<C-k>` / `<C-l>` | Move focus to Left / Down / Up / Right window split | Normal |
 | `<Esc>` | Clear search highlights | Normal |
 | `<Space> q` | Open Diagnostic Quickfix List | Normal |
+
+### 📁 File Explorer (`nvim-tree`)
+
+| Keybinding | Action | Context |
+| :--- | :--- | :--- |
+| `<Space> e` | **Toggle / Focus** File Explorer sidebar | Global |
+| `<CR>` or `o` | Open file / Expand or collapse folder | Inside Tree |
+| `a` | Create new file (append `/` to create directory) | Inside Tree |
+| `d` | Delete file or directory | Inside Tree |
+| `r` | Rename file or directory | Inside Tree |
+| `c` / `p` | Copy / Paste file | Inside Tree |
+| `x` | Cut file | Inside Tree |
+| `H` / `I` | Toggle hidden / Git-ignored files visibility | Inside Tree |
+| `q` | Close File Explorer sidebar | Inside Tree |
 
 ### 🔍 Telescope (Fuzzy Search)
 
