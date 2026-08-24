@@ -30,12 +30,16 @@
 - **🚀 Zero-Dependency Bootstrap:** Powered by Neovim's brand new built-in `vim.pack.add` API — no third-party package managers (Lazy/Packer/Plug) required.
 - **📄 Single File Architecture:** Everything is cleanly organized inside a single, transparent [`init.lua`](file:///home/ajinkya/.config/nvim/init.lua).
 - **📁 VS Code-style File Explorer:** [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua) sidebar for visual project browsing, file creation/renaming/deletion, and Git status indicators.
+- **🌐 Full-Stack Ready:** Configured for TypeScript, JavaScript, React/TSX, Tailwind CSS, HTML/CSS, Python (Django/FastAPI), SQL, Docker, JSON/YAML, C/C++, and Lua.
+- **🏷️ HTML/JSX Auto-Tagging:** [nvim-ts-autotag](https://github.com/windwp/nvim-ts-autotag) auto-closes and auto-renames HTML/JSX/TSX tags.
+- **🎨 Inline Color Previews:** [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua) highlights Hex, RGB, HSL, and Tailwind CSS classes in real-time.
+- **🔄 Surround Editing:** [mini.surround](https://github.com/echasnovski/mini.surround) for instant surrounding with quotes, brackets, or HTML tags (`sa`, `sd`, `sr`).
 - **🎨 Modern Aesthetics:** [Tokyo Night (Moon)](https://github.com/folke/tokyonight.nvim) theme paired with [mini.icons](https://github.com/echasnovski/mini.icons) & [mini.statusline](https://github.com/echasnovski/mini.statusline) rendering mode icons (`󰋜 NORMAL`, `󰏫 INSERT`, `󰈈 VISUAL`, `󰞷 COMMAND`, ` TERMINAL`).
 - **💡 Keymap Helper Popup:** [which-key.nvim](https://github.com/folke/which-key.nvim) interactive popup helper for discovering leader keybindings on the fly.
 - **🌿 Git Integration:** [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) for gutter change indicators, hunk navigation (`]c`/`[c`), line blame popups, and hunk previews.
 - **🔍 Fast Fuzzy Finding:** [Telescope](https://github.com/nvim-telescope/telescope.nvim) configured to find files, live grep text (including hidden files with safe binary/size filtering), search help, and switch buffers.
 - **⚡ Native Treesitter & LSP:** Built-in Neovim 0.12 Treesitter syntax parsing + [Mason](https://github.com/williamboman/mason.nvim) LSP integration with custom diagnostic signs (`󰅚` Error, `󰀦` Warn, `󰋼` Info, `󰌵` Hint) and `--query-driver` support for C/C++ (`clangd`).
-- **⌨️ Intelligent Autocompletion:** [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) with LuaSnip snippet engine, LSP sources, path completion, and auto-pairing (`nvim-autopairs`).
+- **⌨️ Intelligent Autocompletion:** [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) with LuaSnip snippet engine, LSP sources, path completion, buffer word completion, and auto-pairing (`nvim-autopairs`).
 
 ---
 
@@ -98,12 +102,21 @@ The `<Leader>` key is set to **`<Space>`**.
 | `H` / `I` | Toggle hidden / Git-ignored files visibility | Inside Tree |
 | `q` | Close File Explorer sidebar | Inside Tree |
 
+### 🔄 Surround Operations (`mini.surround`)
+
+| Keybinding | Action | Example |
+| :--- | :--- | :--- |
+| `sa` | **Add** surrounding character | `saiw"` surrounds word with `"` |
+| `sd` | **Delete** surrounding character | `sd"` removes surrounding `"` |
+| `sr` | **Replace** surrounding character | `sr"'` changes `"` to `'` |
+
 ### 🔍 Telescope (Fuzzy Search)
 
 | Keybinding | Action | Mode |
 | :--- | :--- | :--- |
 | `<Space> s f` | Search Files (includes hidden files, ignores `.git`) | Normal |
 | `<Space> s g` | Live Grep / Search Text across project | Normal |
+| `<Space> s b` | Search lines in current Buffer | Normal |
 | `<Space> s w` | Search word under cursor | Normal |
 | `<Space> s h` | Search Help Tags | Normal |
 | `<Space> s k` | Search Keymaps | Normal |
@@ -134,6 +147,7 @@ The `<Leader>` key is set to **`<Space>`**.
 | `K` | Display Hover Documentation | Normal |
 | `[d` / `]d` | Jump to Previous / Next Diagnostic issue | Normal |
 | `<Space> c d` | Show line Diagnostic popup window | Normal |
+| `<Space> c f` | **Format current Buffer** (LSP / Prettier / Black) | Normal |
 | `<Space> r n` | Rename Symbol | Normal |
 | `<Space> c a` | Code Action (Select & Apply LSP quick-fix suggestions) | Normal |
 

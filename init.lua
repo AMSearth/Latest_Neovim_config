@@ -80,6 +80,9 @@ vim.pack.add({
   'https://github.com/nvim-telescope/telescope.nvim',
   'https://github.com/nvim-telescope/telescope-ui-select.nvim',
   'https://github.com/nvim-treesitter/nvim-treesitter',
+  'https://github.com/windwp/nvim-ts-autotag',
+  'https://github.com/echasnovski/mini.surround',
+  'https://github.com/NvChad/nvim-colorizer.lua',
   'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/williamboman/mason.nvim',
   'https://github.com/williamboman/mason-lspconfig.nvim',
@@ -335,12 +338,18 @@ require('gitsigns').setup({
 })
 
 -- ------------------------------------------------------------------------
--- Syntax Highlighting & Parsing: Treesitter
+-- Syntax Highlighting & Full-Stack Parsing: Treesitter
 -- ------------------------------------------------------------------------
 local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
 if treesitter_ok then
   treesitter_configs.setup({
-    ensure_installed = { 'lua', 'vim', 'vimdoc', 'c', 'cpp', 'python', 'markdown', 'markdown_inline', 'json', 'yaml', 'bash' },
+    ensure_installed = {
+      'lua', 'vim', 'vimdoc', 'bash',
+      'c', 'cpp',
+      'html', 'css', 'javascript', 'typescript', 'tsx',
+      'python', 'json', 'json5', 'yaml', 'toml', 'sql',
+      'markdown', 'markdown_inline', 'dockerfile',
+    },
     auto_install = true,
     highlight = {
       enable = true,
@@ -355,6 +364,45 @@ if treesitter_ok then
       additional_vim_regex_highlighting = false,
     },
     indent = { enable = true },
+  })
+end
+
+-- Full-Stack HTML/JSX/TSX Auto-tagging & Auto-renaming
+local autotag_ok, autotag = pcall(require, 'nvim-ts-autotag')
+if autotag_ok then
+  autotag.setup({
+    opts = {
+      enable_close = true,
+      enable_rename = true,
+      enable_close_on_slash = true,
+    },
+  })
+end
+
+-- Full-Stack Surround Operations (Quotes, Brackets, HTML Tags)
+local surround_ok, surround = pcall(require, 'mini.surround')
+if surround_ok then
+  surround.setup()
+end
+
+-- Full-Stack Inline Color Highlighter (CSS, Tailwind, Hex, RGB, HSL)
+local colorizer_ok, colorizer = pcall(require, 'colorizer')
+if colorizer_ok then
+  colorizer.setup({
+    filetypes = { '*' },
+    user_default_options = {
+      RGB = true,
+      RRGGBB = true,
+      names = false,
+      RRGGBBAA = true,
+      AARRGGBB = true,
+      rgb_fn = true,
+      hsl_fn = true,
+      css = true,
+      css_fn = true,
+      tailwind = true,
+      mode = 'background',
+    },
   })
 end
 
@@ -479,10 +527,11 @@ vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles
 vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
 vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
 vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
+vim.keymap.set('n', '<leader>sb', builtin.current_buffer_fuzzy_find, { desc = '[S]earch current [B]uffer' })
 vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
 -- ------------------------------------------------------------------------
--- LSP Configuration & Mason (Language Servers) - v2.0+ Compatible
+-- LSP Configuration & Mason (Language Servers) - Full Stack Ready
 -- ------------------------------------------------------------------------
 require('mason').setup()
 
@@ -503,6 +552,44 @@ vim.lsp.config('lua_ls', {
   },
 })
 
+-- Full Stack Web: TypeScript / JavaScript / React / Next.js
+vim.lsp.config('ts_ls', {
+  settings = {
+    typescript = {
+      inlayHints = {
+        includeInlayParameterNameHints = 'all',
+        includeInlayVariableTypeHints = true,
+      },
+    },
+    javascript = {
+      inlayHints = {
+        includeInlayParameterNameHints = 'all',
+        includeInlayVariableTypeHints = true,
+      },
+    },
+  },
+})
+
+-- Full Stack Web: Tailwind CSS
+vim.lsp.config('tailwindcss', {
+  filetypes = { 'html', 'css', 'scss', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue', 'svelte' },
+})
+
+-- Full Stack Web: HTML & CSS
+vim.lsp.config('html', {})
+vim.lsp.config('cssls', {})
+
+-- Full Stack Web: Emmet (HTML/JSX expansion)
+vim.lsp.config('emmet_language_server', {
+  filetypes = { 'css', 'html', 'javascriptreact', 'less', 'sass', 'scss', 'typescriptreact', 'vue' },
+})
+
+-- Full Stack Data & DevOps: JSON, Docker, SQL
+vim.lsp.config('jsonls', {})
+vim.lsp.config('dockerls', {})
+vim.lsp.config('sqlls', {})
+
+-- Backend: Python (Django / FastAPI / Flask)
 vim.lsp.config('pyright', {
   settings = {
     python = {
@@ -516,6 +603,7 @@ vim.lsp.config('pyright', {
   },
 })
 
+-- Systems: C / C++
 vim.lsp.config('clangd', {
   cmd = {
     'clangd',
@@ -530,6 +618,7 @@ vim.lsp.config('clangd', {
   },
 })
 
+-- Grammar & Docs: Markdown / Text / Git Commit
 vim.lsp.config('harper_ls', {
   filetypes = { 'markdown', 'text', 'plaintext', 'gitcommit' },
   settings = {
@@ -565,6 +654,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
     map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+    map('<leader>cf', function() vim.lsp.buf.format({ async = true }) end, '[C]ode [F]ormat Buffer')
     map('<leader>cd', vim.diagnostic.open_float, '[C]ode [D]iagnostic popup')
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
     map('[d', vim.diagnostic.goto_prev, 'Previous Diagnostic')
