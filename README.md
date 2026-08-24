@@ -43,21 +43,74 @@
 
 ---
 
-## 📋 Requirements
+## 📋 Prerequisites & Requirements
+
+### 📦 Quick Install by Operating System
+
+<details open>
+<summary><b>🐧 Arch Linux (pacman & yay)</b></summary>
+
+```bash
+# 1. Install core system tools, runtimes, and nerd fonts
+sudo pacman -Syu --needed \
+  git ripgrep fd base-devel unzip curl \
+  wl-clipboard xclip nodejs npm python python-pip \
+  ttf-jetbrains-mono-nerd
+
+# 2. Install Neovim 0.12+ (if not yet in official stable repos)
+yay -S neovim-nightly-bin
+```
+</details>
+
+<details>
+<summary><b>🐧 Ubuntu / Debian (apt)</b></summary>
+
+```bash
+# 1. Install core packages, runtimes, and tools
+sudo apt update && sudo apt install -y \
+  git ripgrep fd-find build-essential unzip curl \
+  wl-clipboard xclip nodejs npm python3 python3-pip
+
+# 2. Symlink fd for Telescope
+sudo ln -sf $(which fdfind) /usr/local/bin/fd
+
+# 3. Install Neovim 0.12+ (from official GitHub release / appimage / PPA)
+curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz
+sudo tar -C /usr/local -xzf nvim-linux-x86_64.tar.gz --strip-components=1
+rm nvim-linux-x86_64.tar.gz
+```
+</details>
+
+<details>
+<summary><b>🍎 macOS (Homebrew)</b></summary>
+
+```bash
+brew install neovim --HEAD
+brew install git ripgrep fd node npm python3 font-jetbrains-mono-nerd-font
+```
+</details>
+
+<br/>
+
+### 🔍 Detailed Dependency Breakdown
 
 | Dependency | Minimum Version | Description |
 | :--- | :--- | :--- |
-| **Neovim** | `≥ 0.12.0` | Strict requirement for `vim.pack` & native Treesitter |
-| **Git** | Any modern version | Required by `vim.pack` for auto-cloning plugins |
-| **Ripgrep (`rg`)** | Any | Required by Telescope for live text searching |
-| **fd** | Recommended | Accelerated file searching for Telescope |
-| **Nerd Font** | Recommended | Enables statusline mode icons & filetype glyphs |
+| **Neovim** | `≥ 0.12.0` | **Strict requirement** for native `vim.pack` package management & `vim.lsp.config`. |
+| **Git** | Any modern version | Required by `vim.pack` for auto-cloning and updating plugins. |
+| **Ripgrep (`rg`)** | Any | High-performance text searching for Telescope (`<Space> s g`). |
+| **fd** | Recommended | High-speed, `.gitignore`-aware file indexer for Telescope (`<Space> s f`). |
+| **C/C++ Compiler (`gcc`/`clang`)** | Any | Required by Treesitter to automatically build syntax parsers locally. |
+| **Node.js & npm** | `≥ 18.x` | Required by Mason to run web language servers (`ts_ls`, `tailwindcss`, `pyright`, `html`, `cssls`, `emmet`). |
+| **Python & pip** | `≥ 3.10` | For Python language servers, formatters, and linters. |
+| **Clipboard Tool** | `wl-clipboard` / `xclip` / `pbcopy` | Enables seamless system clipboard synchronization (`clipboard = 'unnamedplus'`). |
+| **Nerd Font** | Recommended | Renders statusline mode icons, nvim-tree glyphs, and LSP diagnostic signs (`󰅚`, `󰀦`, `󰋼`, `󰌵`). |
 
 ---
 
 ## 🚀 Quick Start
 
-1. **Backup your existing config:**
+1. **Backup your existing configuration (if any):**
    ```bash
    mv ~/.config/nvim ~/.config/nvim.bak
    ```
@@ -71,7 +124,7 @@
    ```bash
    nvim
    ```
-   *Neovim will automatically clone and load all missing plugins on first boot!*
+   *Neovim will automatically clone and bootstrap all 23 plugins, compile Treesitter parsers, and apply the Tokyo Night Moon theme on first boot with zero manual configuration!*
 
 ---
 
