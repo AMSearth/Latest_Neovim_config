@@ -65,12 +65,14 @@ vim.pack.add({
   'https://github.com/nvim-lua/plenary.nvim',
   'https://github.com/nvim-telescope/telescope.nvim',
   'https://github.com/nvim-telescope/telescope-ui-select.nvim',
+  'https://github.com/nvim-treesitter/nvim-treesitter',
   'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/williamboman/mason.nvim',
   'https://github.com/williamboman/mason-lspconfig.nvim',
   'https://github.com/hrsh7th/nvim-cmp',
   'https://github.com/hrsh7th/cmp-nvim-lsp',
   'https://github.com/hrsh7th/cmp-path',
+  'https://github.com/hrsh7th/cmp-buffer',
   'https://github.com/L3MON4D3/LuaSnip',
   'https://github.com/saadparwaiz1/cmp_luasnip',
   'https://github.com/windwp/nvim-autopairs',
@@ -127,6 +129,10 @@ vim.diagnostic.config({
   },
   virtual_text = true,
   severity_sort = true,
+  float = {
+    border = 'rounded',
+    source = 'if_many',
+  },
 })
 
 -- ------------------------------------------------------------------------
@@ -143,6 +149,8 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
 require('nvim-tree').setup({
+  sync_root_with_cwd = true,
+  respect_buf_cwd = true,
   view = {
     width = 34,
     side = 'left',
@@ -174,6 +182,29 @@ require('nvim-tree').setup({
 
 -- <Space> e to toggle VS Code-like file explorer
 vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle File [E]xplorer' })
+
+-- Auto-close Neovim if nvim-tree is the last remaining window
+vim.api.nvim_create_autocmd('QuitPre', {
+  callback = function()
+    local tree_wins = {}
+    local floating_wins = {}
+    local wins = vim.api.nvim_list_wins()
+    for _, w in ipairs(wins) do
+      local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w))
+      if bufname:match('NvimTree_') ~= nil then
+        table.insert(tree_wins, w)
+      end
+      if vim.api.nvim_win_get_config(w).relative ~= '' then
+        table.insert(floating_wins, w)
+      end
+    end
+    if 1 == #wins - #floating_wins - #tree_wins then
+      for _, w in ipairs(tree_wins) do
+        vim.api.nvim_win_close(w, true)
+      end
+    end
+  end,
+})
 
 local mode_icons = {
   ['n']     = '󰋜 NORMAL',
@@ -290,6 +321,22 @@ require('gitsigns').setup({
 })
 
 -- ------------------------------------------------------------------------
+-- Syntax Highlighting & Parsing: Treesitter
+-- ------------------------------------------------------------------------
+local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
+if treesitter_ok then
+  treesitter_configs.setup({
+    ensure_installed = { 'lua', 'vim', 'vimdoc', 'c', 'cpp', 'python', 'markdown', 'markdown_inline', 'json', 'yaml', 'bash' },
+    auto_install = true,
+    highlight = {
+      enable = true,
+      additional_vim_regex_highlighting = false,
+    },
+    indent = { enable = true },
+  })
+end
+
+-- ------------------------------------------------------------------------
 -- File Searching: Telescope
 -- ------------------------------------------------------------------------
 local telescope = require('telescope')
@@ -302,6 +349,7 @@ local _bad_extensions = {
   'eot', 'mp4', 'mp3', 'mkv', 'avi', 'mov', 'iso', 'bin', 'exe'
 }
 
+-- Synchronous and thread-safe buffer previewer maker
 local safe_previewer_maker = function(filepath, bufnr, opts)
   opts = opts or {}
   filepath = vim.fn.expand(filepath)
@@ -312,23 +360,23 @@ local safe_previewer_maker = function(filepath, bufnr, opts)
     return
   end
 
-  -- Check file size (limit previews to 100KB to prevent memory exhaustion)
-  vim.loop.fs_stat(filepath, function(_, stat)
-    if not stat or stat.size > 100000 then
-      return
-    else
-      previewers.buffer_previewer_maker(filepath, bufnr, opts)
-    end
-  end)
+  -- Check file size synchronously (limit previews to 100KB to prevent memory exhaustion / race conditions)
+  local stat = (vim.uv or vim.loop).fs_stat(filepath)
+  if not stat or stat.size > 100000 then
+    return
+  end
+
+  previewers.buffer_previewer_maker(filepath, bufnr, opts)
 end
 
--- Detect fd / fdfind executable
+-- Detect fd / fdfind executable with fallback to rg
 local fd_cmd = vim.fn.executable('fd') == 1 and 'fd' or (vim.fn.executable('fdfind') == 1 and 'fdfind' or nil)
 local find_files_cmd = nil
 if fd_cmd then
   find_files_cmd = {
     fd_cmd,
     '--type', 'f',
+    '--strip-cwd-prefix',
     '--hidden',
     '--exclude', '.git',
     '--exclude', '.venv',
@@ -338,6 +386,20 @@ if fd_cmd then
     '--exclude', '__pycache__',
     '--exclude', '*.sqlite3',
     '--exclude', '*.pyc',
+  }
+elseif vim.fn.executable('rg') == 1 then
+  find_files_cmd = {
+    'rg',
+    '--files',
+    '--hidden',
+    '--glob=!.git/*',
+    '--glob=!venv/*',
+    '--glob=!.venv/*',
+    '--glob=!env/*',
+    '--glob=!node_modules/*',
+    '--glob=!__pycache__/*',
+    '--glob=!*.sqlite3',
+    '--glob=!*.pyc',
   }
 end
 
@@ -411,7 +473,6 @@ lspconfig_defaults.capabilities = vim.tbl_deep_extend(
 )
 
 -- 2. Configure specific servers via the new native vim.lsp.config API
--- (You only need to do this for servers that require custom settings)
 vim.lsp.config('lua_ls', {
   settings = {
     Lua = {
@@ -464,23 +525,50 @@ vim.lsp.config('harper_ls', {
 })
 
 -- 3. Initialize mason-lspconfig
--- In v2.0+, this automatically enables any server you install via Mason!
--- No setup_handlers required.
 require('mason-lspconfig').setup()
 
--- 4. Keybindings for when an LSP attaches
+-- 4. Keybindings & Autocmds for when an LSP attaches
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
   callback = function(event)
+    local client = vim.lsp.get_client_by_id(event.data.client_id)
     local map = function(keys, func, desc)
       vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
     end
+
     map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+    map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
     map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
     map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+    map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
     map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+    map('<leader>cd', vim.diagnostic.open_float, '[C]ode [D]iagnostic popup')
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
+    map('[d', vim.diagnostic.goto_prev, 'Previous Diagnostic')
+    map(']d', vim.diagnostic.goto_next, 'Next Diagnostic')
+
+    -- Highlight symbol under cursor when idle (if supported by LSP)
+    if client and client.supports_method('textDocument/documentHighlight') then
+      local highlight_augroup = vim.api.nvim_create_augroup('lsp-highlight-' .. event.buf, { clear = true })
+      vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+        buffer = event.buf,
+        group = highlight_augroup,
+        callback = vim.lsp.buf.document_highlight,
+      })
+      vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+        buffer = event.buf,
+        group = highlight_augroup,
+        callback = vim.lsp.buf.clear_references,
+      })
+      vim.api.nvim_create_autocmd('LspDetach', {
+        group = vim.api.nvim_create_augroup('lsp-detach-' .. event.buf, { clear = true }),
+        callback = function(detach_event)
+          vim.lsp.buf.clear_references()
+          vim.api.nvim_clear_autocmds({ group = 'lsp-highlight-' .. detach_event.buf })
+        end,
+      })
+    end
   end,
 })
 
@@ -488,11 +576,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
 -- Auto-completion: nvim-cmp
 -- ------------------------------------------------------------------------
 local cmp = require('cmp')
+local luasnip = require('luasnip')
 
 cmp.setup({
   snippet = {
     expand = function(args)
-      require('luasnip').lsp_expand(args.body)
+      luasnip.lsp_expand(args.body)
     end,
   },
   completion = { completeopt = 'menu,menuone,noinsert' },
@@ -503,12 +592,37 @@ cmp.setup({
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-y>'] = cmp.mapping.confirm({ select = true }), -- Accept completion
     ['<C-Space>'] = cmp.mapping.complete({}),           -- Trigger completion manually
+    -- Snippet Jump navigation
+    ['<C-l>'] = cmp.mapping(function()
+      if luasnip.expand_or_locally_jumpable() then
+        luasnip.expand_or_jump()
+      end
+    end, { 'i', 's' }),
+    ['<C-h>'] = cmp.mapping(function()
+      if luasnip.locally_jumpable(-1) then
+        luasnip.jump(-1)
+      end
+    end, { 'i', 's' }),
   }),
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
     { name = 'path' },
+    { name = 'buffer', keyword_length = 3 },
   },
+})
+
+-- Clear LuaSnip session on leaving insert mode to prevent ghost jumps
+vim.api.nvim_create_autocmd('ModeChanged', {
+  pattern = '*:n',
+  callback = function()
+    if ((vim.v.event.old_mode == 's' and vim.v.event.new_mode == 'n') or vim.v.event.old_mode == 'i')
+        and luasnip.session.current_nodes[vim.api.nvim_get_current_buf()]
+        and not luasnip.session.jump_active
+    then
+      luasnip.unlink_current()
+    end
+  end,
 })
 
 -- ------------------------------------------------------------------------

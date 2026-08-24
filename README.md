@@ -117,6 +117,8 @@ The `<Leader>` key is set to **`<Space>`**.
 | `<C-y>` | **Accept & Confirm** autocompletion suggestion | Insert |
 | `<C-n>` | Select **Next** suggestion item in popup menu | Insert |
 | `<C-p>` | Select **Previous** suggestion item in popup menu | Insert |
+| `<C-l>` | Jump **Forward** to next snippet placeholder | Insert / Snippet |
+| `<C-h>` | Jump **Backward** to previous snippet placeholder | Insert / Snippet |
 | `<C-b>` / `<C-f>` | Scroll documentation window Up / Down | Insert |
 | `<C-Space>` | Trigger autocompletion menu manually | Insert |
 
@@ -125,9 +127,13 @@ The `<Leader>` key is set to **`<Space>`**.
 | Keybinding | Action | Mode |
 | :--- | :--- | :--- |
 | `g d` | Go to Definition | Normal |
+| `g D` | Go to Declaration | Normal |
 | `g r` | Go to References | Normal |
 | `g I` | Go to Implementation | Normal |
+| `<Space> D` | Go to Type Definition | Normal |
 | `K` | Display Hover Documentation | Normal |
+| `[d` / `]d` | Jump to Previous / Next Diagnostic issue | Normal |
+| `<Space> c d` | Show line Diagnostic popup window | Normal |
 | `<Space> r n` | Rename Symbol | Normal |
 | `<Space> c a` | Code Action (Select & Apply LSP quick-fix suggestions) | Normal |
 
