@@ -142,7 +142,7 @@ vim.pack.add({
   'https://github.com/nvim-treesitter/nvim-treesitter',
   'https://github.com/windwp/nvim-ts-autotag',
   'https://github.com/echasnovski/mini.surround',
-  'https://github.com/NvChad/nvim-colorizer.lua',
+  'https://github.com/catgoose/nvim-colorizer.lua',
   'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/williamboman/mason.nvim',
   'https://github.com/williamboman/mason-lspconfig.nvim',
@@ -708,7 +708,7 @@ vim.lsp.config('clangd', {
 
 -- Grammar & Docs: Markdown / Text / Git Commit
 vim.lsp.config('harper_ls', {
-  filetypes = { 'markdown', 'text', 'plaintext', 'gitcommit' },
+  filetypes = { 'markdown', 'text', 'gitcommit' },
   settings = {
     ['harper-ls'] = {
       userDictPath = vim.fn.expand('~/.config/nvim/dict.txt'),
