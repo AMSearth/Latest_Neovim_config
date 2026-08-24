@@ -108,29 +108,37 @@ vim.pack.add({
 -- ------------------------------------------------------------------------
 -- Keymap Popup & Hints: which-key.nvim
 -- ------------------------------------------------------------------------
-local wk = require('which-key')
-wk.setup({
-  delay = 300,
-})
-wk.add({
-  { '<leader>e', desc = 'Toggle File [E]xplorer' },
-  { '<leader>s', group = '[S]earch' },
-  { '<leader>r', group = '[R]ename' },
-  { '<leader>c', group = '[C]ode' },
-  { '<leader>h', group = 'Git [H]unk' },
-})
+-- ------------------------------------------------------------------------
+-- Keymap Popup & Hints: which-key.nvim
+-- ------------------------------------------------------------------------
+local wk_ok, wk = pcall(require, 'which-key')
+if wk_ok then
+  wk.setup({
+    delay = 300,
+  })
+  wk.add({
+    { '<leader>e', desc = 'Toggle File [E]xplorer' },
+    { '<leader>s', group = '[S]earch' },
+    { '<leader>r', group = '[R]ename' },
+    { '<leader>c', group = '[C]ode' },
+    { '<leader>h', group = 'Git [H]unk' },
+  })
+end
 
 -- ------------------------------------------------------------------------
 -- Theme: Tokyo Night (with Terminal Transparency)
 -- ------------------------------------------------------------------------
-require('tokyonight').setup({
-  transparent = true,
-  styles = {
-    sidebars = 'transparent',
-    floats = 'transparent',
-  },
-})
-vim.cmd.colorscheme('tokyonight-moon') 
+local tokyonight_ok, tokyonight = pcall(require, 'tokyonight')
+if tokyonight_ok then
+  tokyonight.setup({
+    transparent = true,
+    styles = {
+      sidebars = 'transparent',
+      floats = 'transparent',
+    },
+  })
+  pcall(vim.cmd.colorscheme, 'tokyonight-moon')
+end
 
 -- ------------------------------------------------------------------------
 -- Custom LSP Diagnostic Signs & UI
@@ -155,8 +163,11 @@ vim.diagnostic.config({
 -- ------------------------------------------------------------------------
 -- Icons & Statusline: mini.icons & mini.statusline
 -- ------------------------------------------------------------------------
-require('mini.icons').setup()
-require('mini.icons').mock_nvim_web_devicons()
+local icons_ok, icons = pcall(require, 'mini.icons')
+if icons_ok then
+  icons.setup()
+  pcall(icons.mock_nvim_web_devicons)
+end
 
 -- ------------------------------------------------------------------------
 -- File Explorer: nvim-tree (VS Code-like sidebar)
@@ -165,63 +176,66 @@ require('mini.icons').mock_nvim_web_devicons()
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
-require('nvim-tree').setup({
-  sync_root_with_cwd = true,
-  respect_buf_cwd = true,
-  view = {
-    width = 34,
-    side = 'left',
-  },
-  renderer = {
-    highlight_git = true,
-    icons = {
-      show = {
-        file = true,
-        folder = true,
-        folder_arrow = true,
-        git = true,
+local nvim_tree_ok, nvim_tree = pcall(require, 'nvim-tree')
+if nvim_tree_ok then
+  nvim_tree.setup({
+    sync_root_with_cwd = true,
+    respect_buf_cwd = true,
+    view = {
+      width = 34,
+      side = 'left',
+    },
+    renderer = {
+      highlight_git = true,
+      icons = {
+        show = {
+          file = true,
+          folder = true,
+          folder_arrow = true,
+          git = true,
+        },
       },
     },
-  },
-  filters = {
-    dotfiles = false,
-    custom = { '^.git$' },
-  },
-  update_focused_file = {
-    enable = true,
-    update_root = false,
-  },
-  git = {
-    enable = true,
-    ignore = false,
-  },
-})
+    filters = {
+      dotfiles = false,
+      custom = { '^.git$' },
+    },
+    update_focused_file = {
+      enable = true,
+      update_root = false,
+    },
+    git = {
+      enable = true,
+      ignore = false,
+    },
+  })
 
--- <Space> e to toggle VS Code-like file explorer
-vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle File [E]xplorer' })
+  -- <Space> e to toggle VS Code-like file explorer
+  vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle File [E]xplorer' })
 
--- Auto-close Neovim if nvim-tree is the last remaining window
-vim.api.nvim_create_autocmd('QuitPre', {
-  callback = function()
-    local tree_wins = {}
-    local floating_wins = {}
-    local wins = vim.api.nvim_list_wins()
-    for _, w in ipairs(wins) do
-      local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w))
-      if bufname:match('NvimTree_') ~= nil then
-        table.insert(tree_wins, w)
+  -- Auto-close Neovim if nvim-tree is the last remaining window
+  vim.api.nvim_create_autocmd('QuitPre', {
+    callback = function()
+      local tree_wins = {}
+      local floating_wins = {}
+      local wins = vim.api.nvim_list_wins()
+      for _, w in ipairs(wins) do
+        local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w))
+        if bufname:match('NvimTree_') ~= nil then
+          table.insert(tree_wins, w)
+        end
+        if vim.api.nvim_win_get_config(w).relative ~= '' then
+          table.insert(floating_wins, w)
+        end
       end
-      if vim.api.nvim_win_get_config(w).relative ~= '' then
-        table.insert(floating_wins, w)
+      if 1 == #wins - #floating_wins - #tree_wins then
+        for _, w in ipairs(tree_wins) do
+          vim.api.nvim_win_close(w, true)
+        end
       end
-    end
-    if 1 == #wins - #floating_wins - #tree_wins then
-      for _, w in ipairs(tree_wins) do
-        vim.api.nvim_win_close(w, true)
-      end
-    end
-  end,
-})
+    end,
+  })
+end
 
 local mode_icons = {
   ['n']     = '󰋜 NORMAL',
@@ -262,80 +276,83 @@ local mode_icons = {
   ['t']     = ' TERMINAL',
 }
 
-local statusline = require('mini.statusline')
-statusline.setup({
-  use_icons = true,
-  content = {
-    active = function()
-      local mode, mode_hl = statusline.section_mode({ trunc_width = 120 })
-      local raw_mode = vim.api.nvim_get_mode().mode
-      local custom_mode = mode_icons[raw_mode] or (raw_mode:upper())
+local statusline_ok, statusline = pcall(require, 'mini.statusline')
+if statusline_ok then
+  statusline.setup({
+    use_icons = true,
+    content = {
+      active = function()
+        local mode, mode_hl = statusline.section_mode({ trunc_width = 120 })
+        local raw_mode = vim.api.nvim_get_mode().mode
+        local custom_mode = mode_icons[raw_mode] or (raw_mode:upper())
 
-      local git           = statusline.section_git({ trunc_width = 40 })
-      local diff          = statusline.section_diff({ trunc_width = 75 })
-      local diagnostics   = statusline.section_diagnostics({ trunc_width = 75 })
-      local filename      = statusline.section_filename({ trunc_width = 140 })
-      local fileinfo      = statusline.section_fileinfo({ trunc_width = 120 })
-      local location      = statusline.section_location({ trunc_width = 75 })
+        local git           = statusline.section_git({ trunc_width = 40 })
+        local diff          = statusline.section_diff({ trunc_width = 75 })
+        local diagnostics   = statusline.section_diagnostics({ trunc_width = 75 })
+        local filename      = statusline.section_filename({ trunc_width = 140 })
+        local fileinfo      = statusline.section_fileinfo({ trunc_width = 120 })
+        local location      = statusline.section_location({ trunc_width = 75 })
 
-      return statusline.combine_groups({
-        { hl = mode_hl, strings = { custom_mode } },
-        { hl = 'MiniStatuslineDevinfo', strings = { git, diff, diagnostics } },
-        '%<',
-        { hl = 'MiniStatuslineFilename', strings = { filename } },
-        '%=',
-        { hl = 'MiniStatuslineFileinfo', strings = { fileinfo } },
-        { hl = mode_hl, strings = { location } },
-      })
-    end,
-  },
-})
+        return statusline.combine_groups({
+          { hl = mode_hl, strings = { custom_mode } },
+          { hl = 'MiniStatuslineDevinfo', strings = { git, diff, diagnostics } },
+          '%<',
+          { hl = 'MiniStatuslineFilename', strings = { filename } },
+          '%=',
+          { hl = 'MiniStatuslineFileinfo', strings = { fileinfo } },
+          { hl = mode_hl, strings = { location } },
+        })
+      end,
+    },
+  })
+end
 
 -- ------------------------------------------------------------------------
 -- Git Status Signs: gitsigns.nvim
 -- ------------------------------------------------------------------------
-require('gitsigns').setup({
-  signs = {
-    add          = { text = '┃' },
-    change       = { text = '┃' },
-    delete       = { text = '_' },
-    topdelete    = { text = '‾' },
-    changedelete = { text = '~' },
-    untracked    = { text = '┆' },
-  },
-  on_attach = function(bufnr)
-    local gitsigns = require('gitsigns')
-
-    local function map(mode, l, r, opts)
-      opts = opts or {}
-      opts.buffer = bufnr
-      vim.keymap.set(mode, l, r, opts)
-    end
-
-    -- Navigation between git change hunks
-    map('n', ']c', function()
-      if vim.wo.diff then
-        vim.cmd.normal({ ']c', bang = true })
-      else
-        gitsigns.nav_hunk('next')
+local gitsigns_ok, gitsigns = pcall(require, 'gitsigns')
+if gitsigns_ok then
+  gitsigns.setup({
+    signs = {
+      add          = { text = '┃' },
+      change       = { text = '┃' },
+      delete       = { text = '_' },
+      topdelete    = { text = '‾' },
+      changedelete = { text = '~' },
+      untracked    = { text = '┆' },
+    },
+    on_attach = function(bufnr)
+      local function map(mode, l, r, opts)
+        opts = opts or {}
+        opts.buffer = bufnr
+        vim.keymap.set(mode, l, r, opts)
       end
-    end, { desc = 'Jump to next git change' })
 
-    map('n', '[c', function()
-      if vim.wo.diff then
-        vim.cmd.normal({ '[c', bang = true })
-      else
-        gitsigns.nav_hunk('prev')
-      end
-    end, { desc = 'Jump to previous git change' })
+      -- Navigation between git change hunks
+      map('n', ']c', function()
+        if vim.wo.diff then
+          vim.cmd.normal({ ']c', bang = true })
+        else
+          gitsigns.nav_hunk('next')
+        end
+      end, { desc = 'Jump to next git change' })
 
-    -- Hunk Actions
-    map('n', '<leader>hp', gitsigns.preview_hunk, { desc = 'Git [H]unk [P]review' })
-    map('n', '<leader>hb', gitsigns.blame_line, { desc = 'Git [H]unk [B]lame line' })
-    map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'Git [H]unk [S]tage' })
-    map('n', '<leader>hr', gitsigns.reset_hunk, { desc = 'Git [H]unk [R]eset' })
-  end,
-})
+      map('n', '[c', function()
+        if vim.wo.diff then
+          vim.cmd.normal({ '[c', bang = true })
+        else
+          gitsigns.nav_hunk('prev')
+        end
+      end, { desc = 'Jump to previous git change' })
+
+      -- Hunk Actions
+      map('n', '<leader>hp', gitsigns.preview_hunk, { desc = 'Git [H]unk [P]review' })
+      map('n', '<leader>hb', gitsigns.blame_line, { desc = 'Git [H]unk [B]lame line' })
+      map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'Git [H]unk [S]tage' })
+      map('n', '<leader>hr', gitsigns.reset_hunk, { desc = 'Git [H]unk [R]eset' })
+    end,
+  })
+end
 
 -- ------------------------------------------------------------------------
 -- Syntax Highlighting & Full-Stack Parsing: Treesitter
@@ -409,139 +426,150 @@ end
 -- ------------------------------------------------------------------------
 -- File Searching: Telescope
 -- ------------------------------------------------------------------------
-local telescope = require('telescope')
-local previewers = require('telescope.previewers')
+local telescope_ok, telescope = pcall(require, 'telescope')
+if telescope_ok then
+  local previewers = require('telescope.previewers')
 
--- Prevent previewing large files or binaries (avoids memory exhaustion / crashes)
-local _bad_extensions = {
-  'sqlite3', 'db', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'zip', 'tar',
-  'gz', '7z', 'rar', 'pyc', 'so', 'dylib', 'dll', 'woff', 'woff2', 'ttf',
-  'eot', 'mp4', 'mp3', 'mkv', 'avi', 'mov', 'iso', 'bin', 'exe'
-}
+  -- Prevent previewing large files or binaries (avoids memory exhaustion / crashes)
+  local _bad_extensions = {
+    'sqlite3', 'db', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'zip', 'tar',
+    'gz', '7z', 'rar', 'pyc', 'so', 'dylib', 'dll', 'woff', 'woff2', 'ttf',
+    'eot', 'mp4', 'mp3', 'mkv', 'avi', 'mov', 'iso', 'bin', 'exe'
+  }
 
--- Synchronous and thread-safe buffer previewer maker
-local safe_previewer_maker = function(filepath, bufnr, opts)
-  opts = opts or {}
-  filepath = vim.fn.expand(filepath)
+  -- Synchronous and thread-safe buffer previewer maker
+  local safe_previewer_maker = function(filepath, bufnr, opts)
+    opts = opts or {}
+    filepath = vim.fn.expand(filepath)
 
-  -- Check file extension against binary blacklist
-  local ext = string.match(filepath, '%.([a-zA-Z0-9]+)$')
-  if ext and vim.tbl_contains(_bad_extensions, string.lower(ext)) then
-    return
+    -- Check file extension against binary blacklist
+    local ext = string.match(filepath, '%.([a-zA-Z0-9]+)$')
+    if ext and vim.tbl_contains(_bad_extensions, string.lower(ext)) then
+      return
+    end
+
+    -- Check file size synchronously (limit previews to 100KB to prevent memory exhaustion / race conditions)
+    local stat = (vim.uv or vim.loop).fs_stat(filepath)
+    if not stat or stat.size > 100000 then
+      return
+    end
+
+    previewers.buffer_previewer_maker(filepath, bufnr, opts)
   end
 
-  -- Check file size synchronously (limit previews to 100KB to prevent memory exhaustion / race conditions)
-  local stat = (vim.uv or vim.loop).fs_stat(filepath)
-  if not stat or stat.size > 100000 then
-    return
-  end
-
-  previewers.buffer_previewer_maker(filepath, bufnr, opts)
-end
-
--- Detect fd / fdfind executable with fallback to rg
-local fd_cmd = vim.fn.executable('fd') == 1 and 'fd' or (vim.fn.executable('fdfind') == 1 and 'fdfind' or nil)
-local find_files_cmd = nil
-if fd_cmd then
-  find_files_cmd = {
-    fd_cmd,
-    '--type', 'f',
-    '--strip-cwd-prefix',
-    '--hidden',
-    '--exclude', '.git',
-    '--exclude', '.venv',
-    '--exclude', 'venv',
-    '--exclude', 'env',
-    '--exclude', 'node_modules',
-    '--exclude', '__pycache__',
-    '--exclude', '*.sqlite3',
-    '--exclude', '*.pyc',
-  }
-elseif vim.fn.executable('rg') == 1 then
-  find_files_cmd = {
-    'rg',
-    '--files',
-    '--hidden',
-    '--glob=!.git/*',
-    '--glob=!venv/*',
-    '--glob=!.venv/*',
-    '--glob=!env/*',
-    '--glob=!node_modules/*',
-    '--glob=!__pycache__/*',
-    '--glob=!*.sqlite3',
-    '--glob=!*.pyc',
-  }
-end
-
-telescope.setup({
-  defaults = {
-    buffer_previewer_maker = safe_previewer_maker,
-    file_ignore_patterns = {
-      '%.git/',
-      'venv/.*',
-      '%.venv/.*',
-      'env/.*',
-      'node_modules/.*',
-      '__pycache__/.*',
-      '%.sqlite3',
-      '%.db',
-      '%.pyc',
-      'staticfiles/.*',
-      'media/.*',
-    },
-    vimgrep_arguments = {
+  -- Detect fd / fdfind executable with fallback to rg
+  local fd_cmd = vim.fn.executable('fd') == 1 and 'fd' or (vim.fn.executable('fdfind') == 1 and 'fdfind' or nil)
+  local find_files_cmd = nil
+  if fd_cmd then
+    find_files_cmd = {
+      fd_cmd,
+      '--type', 'f',
+      '--strip-cwd-prefix',
+      '--hidden',
+      '--exclude', '.git',
+      '--exclude', '.venv',
+      '--exclude', 'venv',
+      '--exclude', 'env',
+      '--exclude', 'node_modules',
+      '--exclude', '__pycache__',
+      '--exclude', '*.sqlite3',
+      '--exclude', '*.pyc',
+    }
+  elseif vim.fn.executable('rg') == 1 then
+    find_files_cmd = {
       'rg',
-      '--color=never',
-      '--no-heading',
-      '--with-filename',
-      '--line-number',
-      '--column',
-      '--smart-case',
+      '--files',
       '--hidden',
       '--glob=!.git/*',
       '--glob=!venv/*',
       '--glob=!.venv/*',
+      '--glob=!env/*',
       '--glob=!node_modules/*',
       '--glob=!__pycache__/*',
       '--glob=!*.sqlite3',
-    },
-  },
-  pickers = {
-    find_files = {
-      hidden = true,
-      find_command = find_files_cmd,
-    },
-  },
-  extensions = {
-    ['ui-select'] = {
-      require('telescope.themes').get_dropdown(),
-    },
-  },
-})
-pcall(telescope.load_extension, 'ui-select')
+      '--glob=!*.pyc',
+    }
+  end
 
-local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
-vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
-vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
-vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
-vim.keymap.set('n', '<leader>sb', builtin.current_buffer_fuzzy_find, { desc = '[S]earch current [B]uffer' })
-vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+  telescope.setup({
+    defaults = {
+      buffer_previewer_maker = safe_previewer_maker,
+      file_ignore_patterns = {
+        '%.git/',
+        'venv/.*',
+        '%.venv/.*',
+        'env/.*',
+        'node_modules/.*',
+        '__pycache__/.*',
+        '%.sqlite3',
+        '%.db',
+        '%.pyc',
+        'staticfiles/.*',
+        'media/.*',
+      },
+      vimgrep_arguments = {
+        'rg',
+        '--color=never',
+        '--no-heading',
+        '--with-filename',
+        '--line-number',
+        '--column',
+        '--smart-case',
+        '--hidden',
+        '--glob=!.git/*',
+        '--glob=!venv/*',
+        '--glob=!.venv/*',
+        '--glob=!node_modules/*',
+        '--glob=!__pycache__/*',
+        '--glob=!*.sqlite3',
+      },
+    },
+    pickers = {
+      find_files = {
+        hidden = true,
+        find_command = find_files_cmd,
+      },
+    },
+    extensions = {
+      ['ui-select'] = {
+        require('telescope.themes').get_dropdown(),
+      },
+    },
+  })
+  pcall(telescope.load_extension, 'ui-select')
+
+  local builtin_ok, builtin = pcall(require, 'telescope.builtin')
+  if builtin_ok then
+    vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
+    vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
+    vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+    vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
+    vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+    vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
+    vim.keymap.set('n', '<leader>sb', builtin.current_buffer_fuzzy_find, { desc = '[S]earch current [B]uffer' })
+    vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+  end
+end
 
 -- ------------------------------------------------------------------------
 -- LSP Configuration & Mason (Language Servers) - Full Stack Ready
 -- ------------------------------------------------------------------------
-require('mason').setup()
+local mason_ok, mason = pcall(require, 'mason')
+if mason_ok then
+  mason.setup()
+end
 
 -- 1. Setup global capabilities for nvim-cmp auto-completion
-local lspconfig_defaults = require('lspconfig').util.default_config
-lspconfig_defaults.capabilities = vim.tbl_deep_extend(
-  'force',
-  lspconfig_defaults.capabilities,
-  require('cmp_nvim_lsp').default_capabilities()
-)
+local lspconfig_ok, lspconfig = pcall(require, 'lspconfig')
+local cmp_lsp_ok, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
+if lspconfig_ok and cmp_lsp_ok then
+  local lspconfig_defaults = lspconfig.util.default_config
+  lspconfig_defaults.capabilities = vim.tbl_deep_extend(
+    'force',
+    lspconfig_defaults.capabilities,
+    cmp_nvim_lsp.default_capabilities()
+  )
+end
 
 -- 2. Configure specific servers via the new native vim.lsp.config API
 vim.lsp.config('lua_ls', {
@@ -636,7 +664,10 @@ vim.lsp.config('harper_ls', {
 })
 
 -- 3. Initialize mason-lspconfig
-require('mason-lspconfig').setup()
+local mason_lsp_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
+if mason_lsp_ok then
+  mason_lspconfig.setup()
+end
 
 -- 4. Keybindings & Autocmds for when an LSP attaches
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -647,11 +678,14 @@ vim.api.nvim_create_autocmd('LspAttach', {
       vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
     end
 
-    map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+    local telescope_builtin = nil
+    pcall(function() telescope_builtin = require('telescope.builtin') end)
+
+    map('gd', telescope_builtin and telescope_builtin.lsp_definitions or vim.lsp.buf.definition, '[G]oto [D]efinition')
     map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-    map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-    map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
-    map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+    map('gr', telescope_builtin and telescope_builtin.lsp_references or vim.lsp.buf.references, '[G]oto [R]eferences')
+    map('gI', telescope_builtin and telescope_builtin.lsp_implementations or vim.lsp.buf.implementation, '[G]oto [I]mplementation')
+    map('<leader>D', telescope_builtin and telescope_builtin.lsp_type_definitions or vim.lsp.buf.type_definition, 'Type [D]efinition')
     map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
     map('<leader>cf', function() vim.lsp.buf.format({ async = true }) end, '[C]ode [F]ormat Buffer')
@@ -687,66 +721,73 @@ vim.api.nvim_create_autocmd('LspAttach', {
 -- ------------------------------------------------------------------------
 -- Auto-completion: nvim-cmp
 -- ------------------------------------------------------------------------
-local cmp = require('cmp')
-local luasnip = require('luasnip')
+local cmp_ok, cmp = pcall(require, 'cmp')
+local luasnip_ok, luasnip = pcall(require, 'luasnip')
 
-cmp.setup({
-  snippet = {
-    expand = function(args)
-      luasnip.lsp_expand(args.body)
+if cmp_ok and luasnip_ok then
+  cmp.setup({
+    snippet = {
+      expand = function(args)
+        luasnip.lsp_expand(args.body)
+      end,
+    },
+    completion = { completeopt = 'menu,menuone,noinsert' },
+    mapping = cmp.mapping.preset.insert({
+      ['<C-n>'] = cmp.mapping.select_next_item(),
+      ['<C-p>'] = cmp.mapping.select_prev_item(),
+      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+      ['<C-f>'] = cmp.mapping.scroll_docs(4),
+      ['<C-y>'] = cmp.mapping.confirm({ select = true }), -- Accept completion
+      ['<C-Space>'] = cmp.mapping.complete({}),           -- Trigger completion manually
+      -- Snippet Jump navigation
+      ['<C-l>'] = cmp.mapping(function()
+        if luasnip.expand_or_locally_jumpable() then
+          luasnip.expand_or_jump()
+        end
+      end, { 'i', 's' }),
+      ['<C-h>'] = cmp.mapping(function()
+        if luasnip.locally_jumpable(-1) then
+          luasnip.jump(-1)
+        end
+      end, { 'i', 's' }),
+    }),
+    sources = {
+      { name = 'nvim_lsp' },
+      { name = 'luasnip' },
+      { name = 'path' },
+      { name = 'buffer', keyword_length = 3 },
+    },
+  })
+
+  -- Clear LuaSnip session on leaving insert mode to prevent ghost jumps
+  vim.api.nvim_create_autocmd('ModeChanged', {
+    pattern = '*:n',
+    callback = function()
+      if ((vim.v.event.old_mode == 's' and vim.v.event.new_mode == 'n') or vim.v.event.old_mode == 'i')
+          and luasnip.session.current_nodes[vim.api.nvim_get_current_buf()]
+          and not luasnip.session.jump_active
+      then
+        luasnip.unlink_current()
+      end
     end,
-  },
-  completion = { completeopt = 'menu,menuone,noinsert' },
-  mapping = cmp.mapping.preset.insert({
-    ['<C-n>'] = cmp.mapping.select_next_item(),
-    ['<C-p>'] = cmp.mapping.select_prev_item(),
-    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-y>'] = cmp.mapping.confirm({ select = true }), -- Accept completion
-    ['<C-Space>'] = cmp.mapping.complete({}),           -- Trigger completion manually
-    -- Snippet Jump navigation
-    ['<C-l>'] = cmp.mapping(function()
-      if luasnip.expand_or_locally_jumpable() then
-        luasnip.expand_or_jump()
-      end
-    end, { 'i', 's' }),
-    ['<C-h>'] = cmp.mapping(function()
-      if luasnip.locally_jumpable(-1) then
-        luasnip.jump(-1)
-      end
-    end, { 'i', 's' }),
-  }),
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
-    { name = 'path' },
-    { name = 'buffer', keyword_length = 3 },
-  },
-})
-
--- Clear LuaSnip session on leaving insert mode to prevent ghost jumps
-vim.api.nvim_create_autocmd('ModeChanged', {
-  pattern = '*:n',
-  callback = function()
-    if ((vim.v.event.old_mode == 's' and vim.v.event.new_mode == 'n') or vim.v.event.old_mode == 'i')
-        and luasnip.session.current_nodes[vim.api.nvim_get_current_buf()]
-        and not luasnip.session.jump_active
-    then
-      luasnip.unlink_current()
-    end
-  end,
-})
+  })
+end
 
 -- ------------------------------------------------------------------------
 -- Auto-pairing: nvim-autopairs
 -- ------------------------------------------------------------------------
-require('nvim-autopairs').setup({
-  check_ts = true, -- Use treesitter to check for a pair
-})
+local autopairs_ok, autopairs = pcall(require, 'nvim-autopairs')
+if autopairs_ok then
+  autopairs.setup({
+    check_ts = true, -- Use treesitter to check for a pair
+  })
 
--- Automatically add `(` after selecting a function or method from nvim-cmp
-local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+  -- Automatically add `(` after selecting a function or method from nvim-cmp
+  if cmp_ok then
+    local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+    cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+  end
+end
 
 -- ==========================================================================
 -- END OF CONFIG
