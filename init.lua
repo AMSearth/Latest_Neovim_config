@@ -33,6 +33,9 @@ vim.opt.inccommand = 'split'       -- Preview substitutions live
 vim.opt.cursorline = true          -- Highlight current line
 vim.opt.scrolloff = 10             -- Keep 10 lines above/below cursor
 vim.opt.clipboard = 'unnamedplus'  -- Sync system clipboard
+vim.opt.confirm = true            -- Confirm to save changes before exiting modified buffer (Kickstart/LazyVim)
+vim.opt.smoothscroll = true       -- Smooth scrolling on wrapped lines (LazyVim)
+vim.opt.virtualedit = 'block'     -- Allow cursor to move where there is no text in visual block mode (LazyVim)
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
@@ -49,7 +52,7 @@ vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
   end,
 })
 
--- Basic Keymaps
+-- Basic Keymaps & Ergonomics (Kickstart / LazyVim / NvChad)
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
@@ -59,12 +62,69 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- Terminal Mode Ergonomics
+vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+
+-- Visual Mode Indent & Move Lines (LazyVim / NvChad standard)
+vim.keymap.set('v', '<', '<gv', { desc = 'Indent left and retain selection' })
+vim.keymap.set('v', '>', '>gv', { desc = 'Indent right and retain selection' })
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
+vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
+
 -- Highlight when yanking (copying) text
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.hl.on_yank()
+  end,
+})
+
+-- Auto-sync buffers when files change on disk (LazyVim / NvChad)
+vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
+  desc = 'Check if buffers changed on disk',
+  callback = function()
+    if vim.o.buftype ~= 'nofile' then
+      vim.cmd('checktime')
+    end
+  end,
+})
+
+-- Restore cursor to last position when reopening a file (Kickstart / LazyVim / NvChad)
+vim.api.nvim_create_autocmd('BufReadPost', {
+  desc = 'Go to last cursor position when opening buffer',
+  callback = function(event)
+    local exclude = { 'gitcommit', 'gitrebase' }
+    local buf = event.buf
+    if vim.tbl_contains(exclude, vim.bo[buf].filetype) or vim.b[buf].last_pos then
+      return
+    end
+    vim.b[buf].last_pos = true
+    local mark = vim.api.nvim_buf_get_mark(buf, '"')
+    local lcount = vim.api.nvim_buf_line_count(buf)
+    if mark[1] > 0 and mark[1] <= lcount then
+      pcall(vim.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
+
+-- Auto-resize window splits on terminal window resize (LazyVim / NvChad)
+vim.api.nvim_create_autocmd('VimResized', {
+  desc = 'Auto-resize splits when window is resized',
+  callback = function()
+    local current_tab = vim.fn.tabpagenr()
+    vim.cmd('tabdo wincmd =')
+    vim.cmd('tabnext ' .. current_tab)
+  end,
+})
+
+-- Quick-close helper windows with 'q' (Kickstart / LazyVim)
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Close helper buffers with q',
+  pattern = { 'help', 'lspinfo', 'man', 'notify', 'qf', 'query', 'checkhealth' },
+  callback = function(event)
+    vim.bo[event.buf].buflisted = false
+    vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true, desc = 'Quit helper buffer' })
   end,
 })
 
@@ -108,7 +168,6 @@ vim.pack.add({
 -- ------------------------------------------------------------------------
 -- Keymap Popup & Hints: which-key.nvim
 -- ------------------------------------------------------------------------
--- ------------------------------------------------------------------------
 -- Keymap Popup & Hints: which-key.nvim
 -- ------------------------------------------------------------------------
 local wk_ok, wk = pcall(require, 'which-key')
@@ -121,6 +180,7 @@ if wk_ok then
     { '<leader>s', group = '[S]earch' },
     { '<leader>r', group = '[R]ename' },
     { '<leader>c', group = '[C]ode' },
+    { '<leader>t', group = '[T]oggle' },
     { '<leader>h', group = 'Git [H]unk' },
   })
 end
@@ -693,6 +753,14 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
     map('[d', vim.diagnostic.goto_prev, 'Previous Diagnostic')
     map(']d', vim.diagnostic.goto_next, 'Next Diagnostic')
+
+    -- Toggle Inlay Hints if supported by LSP (Kickstart standard)
+    if client and client.supports_method('textDocument/inlayHint') then
+      map('<leader>th', function()
+        local current = vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf })
+        vim.lsp.inlay_hint.enable(not current, { bufnr = event.buf })
+      end, '[T]oggle Inlay [H]ints')
+    end
 
     -- Highlight symbol under cursor when idle (if supported by LSP)
     if client and client.supports_method('textDocument/documentHighlight') then

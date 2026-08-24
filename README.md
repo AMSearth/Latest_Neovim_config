@@ -140,6 +140,9 @@ The `<Leader>` key is set to **`<Space>`**.
 | `<C-h>` / `<C-j>` / `<C-k>` / `<C-l>` | Move focus to Left / Down / Up / Right window split | Normal |
 | `<Esc>` | Clear search highlights | Normal |
 | `<Space> q` | Open Diagnostic Quickfix List | Normal |
+| `<Esc><Esc>` | Exit Terminal Mode to Normal Mode | Terminal |
+| `J` / `K` | Move selected lines Down / Up | Visual |
+| `<` / `>` | Indent Left / Right (retains visual selection) | Visual |
 
 ### 📁 File Explorer (`nvim-tree`)
 
@@ -201,6 +204,7 @@ The `<Leader>` key is set to **`<Space>`**.
 | `[d` / `]d` | Jump to Previous / Next Diagnostic issue | Normal |
 | `<Space> c d` | Show line Diagnostic popup window | Normal |
 | `<Space> c f` | **Format current Buffer** (LSP / Prettier / Black) | Normal |
+| `<Space> t h` | **Toggle Inlay Hints** (Variable & Parameter types) | Normal |
 | `<Space> r n` | Rename Symbol | Normal |
 | `<Space> c a` | Code Action (Select & Apply LSP quick-fix suggestions) | Normal |
 
