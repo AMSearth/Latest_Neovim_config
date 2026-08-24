@@ -10,6 +10,8 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Essential Editor Options
+vim.opt.background = 'dark'        -- Avoid terminal DSR latency on startup
+vim.opt.termguicolors = true       -- Enable true color support
 vim.opt.number = true              -- Show line numbers
 vim.opt.relativenumber = true      -- Show relative line numbers
 vim.opt.wrap = false
@@ -34,6 +36,18 @@ vim.opt.clipboard = 'unnamedplus'  -- Sync system clipboard
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
+vim.opt.modeline = true            -- Enable modelines
+vim.opt.modelines = 5              -- Check only top/bottom 5 lines for performance
+
+-- Security: Prevent saving undo history or swap files for sensitive credentials
+vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
+  desc = 'Disable persistent undo & swap for sensitive files',
+  pattern = { '/tmp/*', '/dev/shm/*', '*.env', '*.env.*', '*.secret', '*.pem', '*.key', 'id_rsa*' },
+  callback = function()
+    vim.opt_local.undofile = false
+    vim.opt_local.swapfile = false
+  end,
+})
 
 -- Basic Keymaps
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
@@ -330,6 +344,14 @@ if treesitter_ok then
     auto_install = true,
     highlight = {
       enable = true,
+      -- Performance: Disable on large files (> 100 KB) to prevent editor lag
+      disable = function(lang, buf)
+        local max_filesize = 100 * 1024
+        local ok, stats = pcall((vim.uv or vim.loop).fs_stat, vim.api.nvim_buf_get_name(buf))
+        if ok and stats and stats.size > max_filesize then
+          return true
+        end
+      end,
       additional_vim_regex_highlighting = false,
     },
     indent = { enable = true },
@@ -512,7 +534,7 @@ vim.lsp.config('harper_ls', {
   filetypes = { 'markdown', 'text', 'plaintext', 'gitcommit' },
   settings = {
     ['harper-ls'] = {
-      userDictPath = '~/dict.txt',
+      userDictPath = vim.fn.expand('~/.config/nvim/dict.txt'),
       linters = {
         spell_check = true,
         an_a = true,
