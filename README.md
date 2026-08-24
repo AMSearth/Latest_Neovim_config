@@ -43,6 +43,25 @@
 
 ---
 
+## 🏆 Why This Config? (Comparison & Strong Points)
+
+How this configuration compares to popular Neovim starter frameworks (**Kickstart.nvim**, **LazyVim**, and **NvChad**):
+
+| Feature / Capability | This Config | Kickstart.nvim | LazyVim | NvChad | Why It Matters |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Native Zero-Dependency Bootstrap** | ✅ **`vim.pack`** | ❌ (Lazy.nvim) | ❌ (Lazy.nvim) | ❌ (Lazy.nvim) | Powered 100% by Neovim 0.12+ built-in package management — zero third-party package managers needed. |
+| **Crash-Proof Memory Guard** | ✅ **Built-in** | ❌ None | ❌ None | ❌ None | Prevents PC freezes and Linux OOM swap lockups by enforcing 100KB limits and binary blacklists on search previewers. |
+| **100% `pcall` Exception Shield** | ✅ **Complete** | ⚠️ Partial | ⚠️ Partial | ⚠️ Partial | Every single plugin and module is guarded with fallback safety so Neovim will never crash on startup. |
+| **Full-Stack Out of the Box** | ✅ **Complete** | ⚠️ Minimal | ⚠️ Extra plugins | ⚠️ Extra plugins | Pre-configured for React/TSX, TypeScript, Tailwind CSS, Python/Django, SQL, Docker, HTML/CSS, and Emmet. |
+| **HTML/JSX Auto-Tag & Rename** | ✅ Built-in | ❌ None | ⚠️ Extra module | ❌ None | Automatically closes and renames matching tags dynamically in real time. |
+| **Live CSS / Tailwind Color Badges** | ✅ Built-in | ❌ None | ⚠️ Extra module | ✅ Built-in | Instant inline color background badges for Hex, RGB, HSL, and Tailwind CSS utility classes. |
+| **Surround Operations (`mini.surround`)** | ✅ Built-in | ❌ None | ⚠️ Optional | ❌ None | Rapid quote, bracket, and XML/HTML tag addition, deletion, and replacement (`sa`, `sd`, `sr`). |
+| **Sensitive Buffer Undo-Protection** | ✅ Built-in | ❌ None | ❌ None | ❌ None | Automatically disables persistent undo and swap files for `.env`, `*.secret`, `*.pem`, `*.key`, and `id_rsa*`. |
+| **Single-File Architecture** | ✅ **1 File** | ✅ 1 File | ❌ Multi-file | ❌ Multi-file | Complete clarity and transparency — zero nested module chains or obfuscated defaults. |
+| **Reproducible Lockfile** | ✅ **`nvim-pack-lock.json`**| ❌ None | ⚠️ `lazy-lock.json` | ⚠️ `lazy-lock.json` | Pinned commit SHAs ensure identical, deterministic behavior on every machine. |
+
+---
+
 ## 📋 Prerequisites & Requirements
 
 ### 📦 Quick Install by Operating System
