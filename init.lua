@@ -42,6 +42,11 @@ vim.opt.softtabstop = 4
 vim.opt.modeline = true            -- Enable modelines
 vim.opt.modelines = 5              -- Check only top/bottom 5 lines for performance
 
+-- Disable unused legacy remote providers for instant startup & clean healthcheck
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_python3_provider = 0
+
 -- Security: Prevent saving undo history or swap files for sensitive credentials
 vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
   desc = 'Disable persistent undo & swap for sensitive files',
@@ -693,6 +698,7 @@ vim.lsp.config('pyright', {
 
 -- Systems: C / C++
 vim.lsp.config('clangd', {
+  filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
   cmd = {
     'clangd',
     '--background-index',
@@ -755,7 +761,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map(']d', vim.diagnostic.goto_next, 'Next Diagnostic')
 
     -- Toggle Inlay Hints if supported by LSP (Kickstart standard)
-    if client and client.supports_method('textDocument/inlayHint') then
+    if client and client:supports_method('textDocument/inlayHint') then
       map('<leader>th', function()
         local current = vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf })
         vim.lsp.inlay_hint.enable(not current, { bufnr = event.buf })
@@ -763,7 +769,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end
 
     -- Highlight symbol under cursor when idle (if supported by LSP)
-    if client and client.supports_method('textDocument/documentHighlight') then
+    if client and client:supports_method('textDocument/documentHighlight') then
       local highlight_augroup = vim.api.nvim_create_augroup('lsp-highlight-' .. event.buf, { clear = true })
       vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
         buffer = event.buf,
