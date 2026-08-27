@@ -539,6 +539,12 @@ if telescope_ok then
       '--exclude', '__pycache__',
       '--exclude', '*.sqlite3',
       '--exclude', '*.pyc',
+      '--exclude', '.cache',
+      '--exclude', '.local',
+      '--exclude', '.cargo',
+      '--exclude', '.rustup',
+      '--exclude', '.npm',
+      '--exclude', 'snap',
     }
   elseif vim.fn.executable('rg') == 1 then
     find_files_cmd = {
@@ -553,6 +559,12 @@ if telescope_ok then
       '--glob=!__pycache__/*',
       '--glob=!*.sqlite3',
       '--glob=!*.pyc',
+      '--glob=!.cache/*',
+      '--glob=!.local/*',
+      '--glob=!.cargo/*',
+      '--glob=!.rustup/*',
+      '--glob=!.npm/*',
+      '--glob=!snap/*',
     }
   end
 
@@ -571,6 +583,13 @@ if telescope_ok then
         '%.pyc',
         'staticfiles/.*',
         'media/.*',
+        '%.cache/.*',
+        '%.local/.*',
+        '%.cargo/.*',
+        '%.rustup/.*',
+        '%.npm/.*',
+        'snap/.*',
+        'Downloads/.*',
       },
       vimgrep_arguments = {
         'rg',
@@ -587,6 +606,12 @@ if telescope_ok then
         '--glob=!node_modules/*',
         '--glob=!__pycache__/*',
         '--glob=!*.sqlite3',
+        '--glob=!.cache/*',
+        '--glob=!.local/*',
+        '--glob=!.cargo/*',
+        '--glob=!.rustup/*',
+        '--glob=!.npm/*',
+        '--glob=!snap/*',
       },
     },
     pickers = {
@@ -605,14 +630,65 @@ if telescope_ok then
 
   local builtin_ok, builtin = pcall(require, 'telescope.builtin')
   if builtin_ok then
+    -- Helper function to dynamically resolve the current folder or project root
+    -- This prevents Telescope from searching the entire $HOME directory
+    local function get_current_search_dir()
+      local buf = vim.api.nvim_get_current_buf()
+      local bufname = vim.api.nvim_buf_get_name(buf)
+      local home = vim.env.HOME or os.getenv('HOME')
+
+      if bufname and bufname ~= '' and vim.bo[buf].buftype == '' then
+        local buf_dir = vim.fs.dirname(bufname)
+        if buf_dir and buf_dir ~= '' then
+          local root = vim.fs.root(buf, { '.git', 'package.json', 'Cargo.toml', 'pyproject.toml', 'go.mod', 'Makefile', '.root' })
+          if root and root ~= home then
+            return root
+          end
+          if buf_dir ~= home then
+            return buf_dir
+          end
+        end
+      end
+
+      return vim.fn.getcwd()
+    end
+
+    local function find_files_in_folder()
+      local search_dir = get_current_search_dir()
+      builtin.find_files({
+        cwd = search_dir,
+        prompt_title = 'Find Files (' .. vim.fs.basename(search_dir) .. ')',
+      })
+    end
+
+    local function live_grep_in_folder()
+      local search_dir = get_current_search_dir()
+      builtin.live_grep({
+        cwd = search_dir,
+        prompt_title = 'Live Grep (' .. vim.fs.basename(search_dir) .. ')',
+      })
+    end
+
+    local function grep_string_in_folder()
+      local search_dir = get_current_search_dir()
+      builtin.grep_string({
+        cwd = search_dir,
+        prompt_title = 'Grep String (' .. vim.fs.basename(search_dir) .. ')',
+      })
+    end
+
     vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
     vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-    vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
-    vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-    vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+    vim.keymap.set('n', '<leader>sf', find_files_in_folder, { desc = '[S]earch [F]iles (Current Folder/Root)' })
+    vim.keymap.set('n', '<leader>sw', grep_string_in_folder, { desc = '[S]earch current [W]ord (Current Folder/Root)' })
+    vim.keymap.set('n', '<leader>sg', live_grep_in_folder, { desc = '[S]earch by [G]rep (Current Folder/Root)' })
     vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
     vim.keymap.set('n', '<leader>sb', builtin.current_buffer_fuzzy_find, { desc = '[S]earch current [B]uffer' })
     vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+
+    -- Explicit CWD search mappings if needed
+    vim.keymap.set('n', '<leader>sF', function() builtin.find_files({ cwd = vim.fn.getcwd() }) end, { desc = '[S]earch [F]iles in CWD' })
+    vim.keymap.set('n', '<leader>sG', function() builtin.live_grep({ cwd = vim.fn.getcwd() }) end, { desc = '[S]earch by [G]rep in CWD' })
   end
 end
 

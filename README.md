@@ -189,10 +189,12 @@ The `<Leader>` key is set to **`<Space>`**.
 
 | Keybinding | Action | Mode |
 | :--- | :--- | :--- |
-| `<Space> s f` | Search Files (includes hidden files, ignores `.git`) | Normal |
-| `<Space> s g` | Live Grep / Search Text across project | Normal |
+| `<Space> s f` | Search Files in current folder / project root | Normal |
+| `<Space> s g` | Live Grep in current folder / project root | Normal |
+| `<Space> s w` | Search word under cursor (in current folder / root) | Normal |
 | `<Space> s b` | Search lines in current Buffer | Normal |
-| `<Space> s w` | Search word under cursor | Normal |
+| `<Space> s F` | Search Files in global Working Directory (`cwd`) | Normal |
+| `<Space> s G` | Live Grep in global Working Directory (`cwd`) | Normal |
 | `<Space> s h` | Search Help Tags | Normal |
 | `<Space> s k` | Search Keymaps | Normal |
 | `<Space> s d` | Search Workspace Diagnostics | Normal |
