@@ -247,8 +247,12 @@ if nvim_tree_ok then
     sync_root_with_cwd = true,
     respect_buf_cwd = true,
     view = {
-      width = 34,
       side = 'left',
+      width = {
+        min = 20,
+        max = 50,
+        padding = 2,
+      },
     },
     renderer = {
       highlight_git = true,
