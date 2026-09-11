@@ -792,18 +792,18 @@ vim.lsp.config('clangd', {
   },
 })
 
--- Grammar & Docs: Markdown / Text / Git Commit
-vim.lsp.config('harper_ls', {
+-- Novel & Prose Writing / Grammar: LTeX (LanguageTool)
+-- Deep syntactic grammar analysis, sentence structure checks, and accurate word correction
+vim.lsp.config('ltex', {
   filetypes = { 'markdown', 'text', 'gitcommit' },
   settings = {
-    ['harper-ls'] = {
-      userDictPath = vim.fn.expand('~/.config/nvim/dict.txt'),
-      linters = {
-        spell_check = true,
-        an_a = true,
-        sentence_capitalization = true,
-        repeated_words = true,
-        long_sentences = true,
+    ltex = {
+      language = 'en-US',
+      enabled = { 'markdown', 'text', 'gitcommit' },
+      sentenceCacheSize = 5000,
+      additionalRules = {
+        enablePickyRules = true,
+        motherTongue = 'en-US',
       },
     },
   },
@@ -812,7 +812,11 @@ vim.lsp.config('harper_ls', {
 -- 3. Initialize mason-lspconfig
 local mason_lsp_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
 if mason_lsp_ok then
-  mason_lspconfig.setup()
+  mason_lspconfig.setup({
+    ensure_installed = {
+      'ltex',
+    },
+  })
 end
 
 -- 4. Keybindings & Autocmds for when an LSP attaches
