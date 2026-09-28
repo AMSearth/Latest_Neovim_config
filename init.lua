@@ -750,6 +750,12 @@ vim.lsp.config('eslint', {
   },
 })
 
+-- Full Stack Web: Oxlint (High-performance Rust-based JS/TS Linter)
+vim.lsp.config('oxlint', {
+  root_markers = { '.oxlintrc.json', '.oxlintrc.jsonc', 'oxlint.config.ts', 'package.json', '.git' },
+  workspace_required = false,
+})
+
 -- Full Stack Web: Tailwind CSS
 vim.lsp.config('tailwindcss', {
   filetypes = { 'html', 'css', 'scss', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue', 'svelte' },
@@ -823,6 +829,7 @@ if mason_lsp_ok then
     ensure_installed = {
       'ltex',
       'eslint',
+      'oxlint',
     },
   })
 end
@@ -1142,6 +1149,12 @@ vim.api.nvim_create_autocmd('BufWritePre', {
     local eslint_clients = vim.lsp.get_clients({ bufnr = event.buf, name = 'eslint' })
     if #eslint_clients > 0 then
       pcall(vim.cmd, 'silent! EslintFixAll')
+    end
+
+    -- Run Oxlint auto-fixes if Oxlint language server is active on buffer
+    local oxlint_clients = vim.lsp.get_clients({ bufnr = event.buf, name = 'oxlint' })
+    if #oxlint_clients > 0 then
+      pcall(vim.cmd, 'silent! LspOxlintFixAll')
     end
 
     -- Format with Prettier
