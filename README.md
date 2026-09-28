@@ -31,6 +31,7 @@
 - **📄 Single File Architecture:** Everything is cleanly organized inside a single, transparent [`init.lua`](file:///home/ajinkya/.config/nvim/init.lua).
 - **📁 VS Code-style File Explorer:** [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua) sidebar for visual project browsing, file creation/renaming/deletion, and Git status indicators.
 - **🌐 Full-Stack Ready:** Configured for TypeScript, JavaScript, React/TSX, Tailwind CSS, HTML/CSS, Python (Django/FastAPI), SQL, Docker, JSON/YAML, C/C++, and Lua.
+- **✨ Prettier & ESLint Auto-Format:** Built-in Prettier formatter for JavaScript, TypeScript, JSX/TSX, HTML, CSS/SCSS, JSON, YAML, and Markdown with instant format-on-save (`BufWritePre`), manual format shortcuts (`<Space> c f` / `<Space> c p`), format toggle (`<Space> t p`), and ESLint auto-fixing (`EslintFixAll`).
 - **🏷️ HTML/JSX Auto-Tagging:** [nvim-ts-autotag](https://github.com/windwp/nvim-ts-autotag) auto-closes and auto-renames HTML/JSX/TSX tags.
 - **🎨 Inline Color Previews:** [nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua) highlights Hex, RGB, HSL, and Tailwind CSS classes in real-time.
 - **🔄 Surround Editing:** [mini.surround](https://github.com/echasnovski/mini.surround) for instant surrounding with quotes, brackets, or HTML tags (`sa`, `sd`, `sr`).
@@ -224,7 +225,9 @@ The `<Leader>` key is set to **`<Space>`**.
 | `K` | Display Hover Documentation | Normal |
 | `[d` / `]d` | Jump to Previous / Next Diagnostic issue | Normal |
 | `<Space> c d` | Show line Diagnostic popup window | Normal |
-| `<Space> c f` | **Format current Buffer** (LSP / Prettier / Black) | Normal |
+| `<Space> c f` | **Format current Buffer** (Prettier / LSP) | Normal |
+| `<Space> c p` | **Format with Prettier** (explicit) | Normal |
+| `<Space> t p` | **Toggle Format-on-Save** (Prettier / ESLint) | Normal |
 | `<Space> t h` | **Toggle Inlay Hints** (Variable & Parameter types) | Normal |
 | `<Space> r n` | Rename Symbol | Normal |
 | `<Space> c a` | Code Action (Select & Apply LSP quick-fix suggestions) | Normal |

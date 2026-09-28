@@ -743,6 +743,13 @@ vim.lsp.config('ts_ls', {
   },
 })
 
+-- Full Stack Web: ESLint (Linting Diagnostics & Auto-fix for JS / TS / React)
+vim.lsp.config('eslint', {
+  settings = {
+    workingDirectories = { mode = 'auto' },
+  },
+})
+
 -- Full Stack Web: Tailwind CSS
 vim.lsp.config('tailwindcss', {
   filetypes = { 'html', 'css', 'scss', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue', 'svelte' },
@@ -815,6 +822,7 @@ if mason_lsp_ok then
   mason_lspconfig.setup({
     ensure_installed = {
       'ltex',
+      'eslint',
     },
   })
 end
@@ -838,7 +846,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('<leader>D', telescope_builtin and telescope_builtin.lsp_type_definitions or vim.lsp.buf.type_definition, 'Type [D]efinition')
     map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-    map('<leader>cf', function() vim.lsp.buf.format({ async = true }) end, '[C]ode [F]ormat Buffer')
+    map('<leader>cf', function()
+      if not (vim.g.format_with_prettier and vim.g.format_with_prettier({ bufnr = event.buf, silent = false })) then
+        vim.lsp.buf.format({ async = true })
+      end
+    end, '[C]ode [F]ormat Buffer (Prettier / LSP)')
+    map('<leader>cp', function()
+      if vim.g.format_with_prettier then
+        vim.g.format_with_prettier({ bufnr = event.buf, force = true, silent = false })
+      end
+    end, '[C]ode [P]rettier Format')
     map('<leader>cd', vim.diagnostic.open_float, '[C]ode [D]iagnostic popup')
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
     map('[d', vim.diagnostic.goto_prev, 'Previous Diagnostic')
@@ -946,6 +963,191 @@ if autopairs_ok then
     cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
   end
 end
+
+-- ------------------------------------------------------------------------
+-- Formatter: Prettier & Format-on-Save Integration (ESLint + Prettier)
+-- ------------------------------------------------------------------------
+local prettier_supported_fts = {
+  javascript = true,
+  javascriptreact = true,
+  typescript = true,
+  typescriptreact = true,
+  vue = true,
+  svelte = true,
+  css = true,
+  scss = true,
+  less = true,
+  html = true,
+  json = true,
+  jsonc = true,
+  yaml = true,
+  markdown = true,
+  graphql = true,
+}
+
+local function get_prettier_bin()
+  -- 1. Check local node_modules in project
+  local local_bin = vim.fn.findfile('node_modules/.bin/prettier', '.;')
+  if local_bin ~= '' and vim.fn.executable(local_bin) == 1 then
+    return vim.fn.fnamemodify(local_bin, ':p')
+  end
+  -- 2. Check Mason installation
+  local mason_bin = vim.fn.expand('~/.local/share/nvim/mason/bin/prettier')
+  if vim.fn.executable(mason_bin) == 1 then
+    return mason_bin
+  end
+  -- 3. Check system PATH
+  local path_bin = vim.fn.exepath('prettier')
+  if path_bin ~= '' then
+    return path_bin
+  end
+  return nil
+end
+
+local function format_with_prettier(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false
+  end
+
+  local ft = vim.bo[bufnr].filetype
+  if not prettier_supported_fts[ft] and not opts.force then
+    if not opts.silent then
+      vim.notify('Prettier does not support filetype: ' .. (ft ~= '' and ft or 'unknown'), vim.log.levels.WARN)
+    end
+    return false
+  end
+
+  local prettier = get_prettier_bin()
+  if not prettier then
+    if not opts.silent then
+      vim.notify('Prettier executable not found. Install via Mason (:MasonInstall prettier)', vim.log.levels.ERROR)
+    end
+    return false
+  end
+
+  local filepath = vim.api.nvim_buf_get_name(bufnr)
+  local args = { prettier }
+
+  if filepath ~= '' then
+    table.insert(args, '--stdin-filepath')
+    table.insert(args, filepath)
+  else
+    table.insert(args, '--parser')
+    local parser_map = {
+      javascript = 'babel',
+      javascriptreact = 'babel',
+      typescript = 'typescript',
+      typescriptreact = 'typescript',
+      html = 'html',
+      css = 'css',
+      scss = 'scss',
+      json = 'json',
+      yaml = 'yaml',
+      markdown = 'markdown',
+      graphql = 'graphql',
+      vue = 'vue',
+      svelte = 'html',
+    }
+    table.insert(args, parser_map[ft] or 'babel')
+  end
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local input = table.concat(lines, '\n')
+
+  local res = vim.system(args, { stdin = input }):wait()
+  if res.code == 0 and res.stdout and #res.stdout > 0 then
+    local new_lines = vim.split(res.stdout, '\n', { plain = true })
+    if #new_lines > 0 and new_lines[#new_lines] == '' then
+      table.remove(new_lines, #new_lines)
+    end
+
+    local orig_text = table.concat(lines, '\n')
+    local formatted_text = table.concat(new_lines, '\n')
+
+    if orig_text ~= formatted_text then
+      local current_win = vim.api.nvim_get_current_win()
+      local win_buf = vim.api.nvim_win_get_buf(current_win)
+      if win_buf == bufnr then
+        local cursor = vim.api.nvim_win_get_cursor(current_win)
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
+        local count = vim.api.nvim_buf_line_count(bufnr)
+        if cursor[1] > count then
+          cursor[1] = count
+        end
+        pcall(vim.api.nvim_win_set_cursor, current_win, cursor)
+      else
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
+      end
+      if not opts.silent then
+        vim.notify('Formatted with Prettier', vim.log.levels.INFO)
+      end
+    elseif not opts.silent then
+      vim.notify('Prettier: Buffer already formatted', vim.log.levels.INFO)
+    end
+    return true
+  elseif res.code ~= 0 then
+    if not opts.silent then
+      local err = res.stderr or 'Prettier formatting failed'
+      vim.notify('Prettier error: ' .. err, vim.log.levels.ERROR)
+    end
+    return false
+  end
+  return false
+end
+
+-- Expose function for keymaps & autocmds
+vim.g.format_with_prettier = format_with_prettier
+vim.g.prettier_autoformat = true -- Enable auto format on save by default
+
+-- User Commands
+vim.api.nvim_create_user_command('Prettier', function()
+  format_with_prettier({ force = true, silent = false })
+end, { desc = 'Format current buffer with Prettier' })
+
+vim.api.nvim_create_user_command('PrettierToggle', function()
+  vim.g.prettier_autoformat = not vim.g.prettier_autoformat
+  local status = vim.g.prettier_autoformat and 'enabled' or 'disabled'
+  vim.notify('Prettier format-on-save ' .. status, vim.log.levels.INFO)
+end, { desc = 'Toggle Prettier format-on-save' })
+
+-- Global Keybindings (Work across all buffers, whether LSP is attached or not)
+vim.keymap.set('n', '<leader>cp', function()
+  format_with_prettier({ force = true, silent = false })
+end, { desc = '[C]ode [P]rettier Format' })
+
+vim.keymap.set('n', '<leader>cf', function()
+  if not format_with_prettier({ silent = false }) then
+    vim.lsp.buf.format({ async = true })
+  end
+end, { desc = '[C]ode [F]ormat Buffer (Prettier / LSP)' })
+
+vim.keymap.set('n', '<leader>tp', function()
+  vim.g.prettier_autoformat = not vim.g.prettier_autoformat
+  local status = vim.g.prettier_autoformat and 'enabled' or 'disabled'
+  vim.notify('Prettier format-on-save ' .. status, vim.log.levels.INFO)
+end, { desc = '[T]oggle [P]rettier format-on-save' })
+
+-- Auto-Format On Save (BufWritePre) for Prettier & ESLint
+vim.api.nvim_create_autocmd('BufWritePre', {
+  desc = 'Auto-format buffer with Prettier & ESLint on save',
+  group = vim.api.nvim_create_augroup('kickstart-format-on-save', { clear = true }),
+  callback = function(event)
+    if not vim.g.prettier_autoformat then
+      return
+    end
+
+    -- Run ESLint auto-fixes first if ESLint language server is active on buffer
+    local eslint_clients = vim.lsp.get_clients({ bufnr = event.buf, name = 'eslint' })
+    if #eslint_clients > 0 then
+      pcall(vim.cmd, 'silent! EslintFixAll')
+    end
+
+    -- Format with Prettier
+    format_with_prettier({ bufnr = event.buf, silent = true })
+  end,
+})
 
 -- ==========================================================================
 -- END OF CONFIG
