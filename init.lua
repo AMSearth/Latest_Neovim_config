@@ -42,10 +42,18 @@ vim.opt.softtabstop = 4
 vim.opt.modeline = true
 vim.opt.modelines = 5
 
--- Disable unused legacy remote providers for instant startup & clean healthcheck
+-- Set Built-in Native Colorscheme (Zero overhead)
+vim.cmd.colorscheme('habamax')
+
+-- Disable unused legacy remote providers for instant startup
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 vim.g.loaded_python3_provider = 0
+
+-- Configure Native File Explorer (Netrw) to act like a sidebar
+vim.g.netrw_banner = 0
+vim.g.netrw_winsize = 25
+vim.g.netrw_liststyle = 3 -- Tree view
 
 -- Security: Prevent saving undo history or swap files for sensitive credentials
 vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
@@ -69,6 +77,9 @@ vim.keymap.set('v', '<', '<gv', { desc = 'Indent left' })
 vim.keymap.set('v', '>', '>gv', { desc = 'Indent right' })
 vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
+
+-- Toggle Native File Explorer (Netrw)
+vim.keymap.set('n', '<leader>e', '<cmd>Lexplore<CR>', { desc = 'Toggle File [E]xplorer (Netrw)' })
 
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
@@ -109,7 +120,7 @@ vim.api.nvim_create_autocmd('VimResized', {
 
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Close helper buffers with q',
-  pattern = { 'help', 'lspinfo', 'man', 'notify', 'qf', 'query', 'checkhealth' },
+  pattern = { 'help', 'lspinfo', 'man', 'notify', 'qf', 'query', 'checkhealth', 'netrw' },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
     vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true })
@@ -117,97 +128,41 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 -- ==========================================================================
--- 2. NATIVE PLUGIN INSTALLATION (vim.pack)
+-- 2. NATIVE PLUGIN INSTALLATION (vim.pack) - BARE MINIMUM
 -- ==========================================================================
 vim.pack.add({
-  'https://github.com/folke/tokyonight.nvim',
   'https://github.com/nvim-lua/plenary.nvim',
   'https://github.com/nvim-telescope/telescope.nvim',
-  'https://github.com/nvim-telescope/telescope-ui-select.nvim',
   'https://github.com/nvim-treesitter/nvim-treesitter',
   'https://github.com/windwp/nvim-ts-autotag',
   'https://github.com/echasnovski/mini.surround',
-  'https://github.com/catgoose/nvim-colorizer.lua',
   'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/williamboman/mason.nvim',
-  -- Removed mason-lspconfig.nvim (No auto-installing allowed)
   'https://github.com/hrsh7th/nvim-cmp',
   'https://github.com/hrsh7th/cmp-nvim-lsp',
   'https://github.com/hrsh7th/cmp-path',
   'https://github.com/hrsh7th/cmp-buffer',
-  'https://github.com/L3MON4D3/LuaSnip',
-  'https://github.com/saadparwaiz1/cmp_luasnip',
   'https://github.com/windwp/nvim-autopairs',
-  'https://github.com/echasnovski/mini.icons',
-  'https://github.com/echasnovski/mini.statusline',
   'https://github.com/lewis6991/gitsigns.nvim',
-  'https://github.com/folke/which-key.nvim',
-  'https://github.com/nvim-tree/nvim-tree.lua',
 })
 
 -- ==========================================================================
 -- 3. PLUGIN CONFIGURATION
 -- ==========================================================================
 
-local wk_ok, wk = pcall(require, 'which-key')
-if wk_ok then
-  wk.setup({ delay = 300 })
-  wk.add({
-    { '<leader>e', desc = 'Toggle File [E]xplorer' },
-    { '<leader>s', group = '[S]earch' },
-    { '<leader>r', group = '[R]ename' },
-    { '<leader>c', group = '[C]ode' },
-    { '<leader>t', group = '[T]oggle' },
-    { '<leader>h', group = 'Git [H]unk' },
-  })
-end
-
-local tokyonight_ok, tokyonight = pcall(require, 'tokyonight')
-if tokyonight_ok then
-  tokyonight.setup({
-    transparent = true,
-    styles = { sidebars = 'transparent', floats = 'transparent' },
-  })
-  pcall(vim.cmd.colorscheme, 'tokyonight-moon')
-end
-
 vim.diagnostic.config({
   signs = {
     text = {
-      [vim.diagnostic.severity.ERROR] = '󰅚 ',
-      [vim.diagnostic.severity.WARN]  = '󰀦 ',
-      [vim.diagnostic.severity.INFO]  = '󰋼 ',
-      [vim.diagnostic.severity.HINT]  = '󰌵 ',
+      [vim.diagnostic.severity.ERROR] = 'E',
+      [vim.diagnostic.severity.WARN]  = 'W',
+      [vim.diagnostic.severity.INFO]  = 'I',
+      [vim.diagnostic.severity.HINT]  = 'H',
     },
   },
   virtual_text = true,
   severity_sort = true,
   float = { border = 'rounded', source = 'if_many' },
 })
-
-local icons_ok, icons = pcall(require, 'mini.icons')
-if icons_ok then
-  icons.setup()
-  pcall(icons.mock_nvim_web_devicons)
-end
-
-vim.g.loaded_netrw = 1
-vim.g.loaded_netrwPlugin = 1
-local nvim_tree_ok, nvim_tree = pcall(require, 'nvim-tree')
-if nvim_tree_ok then
-  nvim_tree.setup({
-    sync_root_with_cwd = true,
-    respect_buf_cwd = true,
-    view = { side = 'left', width = { min = 20, max = 50, padding = 2 } },
-    renderer = { highlight_git = true, icons = { show = { git = true } } },
-    filters = { dotfiles = false, custom = { '^.git$' } },
-    git = { enable = true, ignore = false },
-  })
-  vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle File [E]xplorer' })
-end
-
-local statusline_ok, statusline = pcall(require, 'mini.statusline')
-if statusline_ok then statusline.setup({ use_icons = true }) end
 
 local gitsigns_ok, gitsigns = pcall(require, 'gitsigns')
 if gitsigns_ok then
@@ -237,8 +192,8 @@ end
 local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
 if treesitter_ok then
   treesitter_configs.setup({
-    ensure_installed = {}, -- NO AUTO INSTALL
-    auto_install = false,  -- Strict block on background downloads
+    ensure_installed = {}, 
+    auto_install = false,  
     sync_install = false,
     highlight = {
       enable = true,
@@ -261,18 +216,6 @@ if autotag_ok then autotag.setup({ opts = { enable_close = true, enable_rename =
 
 local surround_ok, surround = pcall(require, 'mini.surround')
 if surround_ok then surround.setup() end
-
-local colorizer_ok, colorizer = pcall(require, 'colorizer')
-if colorizer_ok then
-  colorizer.setup({
-    -- POTATO PC TWEAK: Only run regex color checks on specific front-end files
-    filetypes = { 'css', 'scss', 'html', 'javascript', 'javascriptreact', 'typescriptreact' },
-    user_default_options = {
-      RGB = true, RRGGBB = true, names = false, RRGGBBAA = true, AARRGGBB = true,
-      rgb_fn = true, hsl_fn = true, css = true, css_fn = true, tailwind = true, mode = 'background',
-    },
-  })
-end
 
 local telescope_ok, telescope = pcall(require, 'telescope')
 if telescope_ok then
@@ -299,12 +242,8 @@ if telescope_ok then
     defaults = {
       buffer_previewer_maker = safe_previewer_maker,
       file_ignore_patterns = { '%.git/', 'node_modules/.*', '%.cache/.*' },
-    },
-    extensions = {
-      ['ui-select'] = { require('telescope.themes').get_dropdown() },
-    },
+    }
   })
-  pcall(telescope.load_extension, 'ui-select')
 
   local builtin_ok, builtin = pcall(require, 'telescope.builtin')
   if builtin_ok then
@@ -320,10 +259,7 @@ end
 local mason_ok, mason = pcall(require, 'mason')
 if mason_ok then
   mason.setup({
-    ui = {
-      -- SECURITY & PERF: Don't phone home to check for registry updates on editor start
-      check_outdated_packages_on_open = false,
-    }
+    ui = { check_outdated_packages_on_open = false } -- SECURITY & PERF: No background network calls on boot
   })
 end
 
@@ -340,10 +276,6 @@ end
 
 vim.lsp.config('lua_ls', { settings = { Lua = { diagnostics = { globals = { 'vim' } } } } })
 vim.lsp.config('ts_ls', { settings = { typescript = { inlayHints = { includeInlayParameterNameHints = 'all' } } } })
-
--- POTATO PC TWEAK: Disabled ESLint entirely. Use Oxlint instead (Rust-based, uses almost 0 RAM).
--- vim.lsp.config('eslint', { settings = { workingDirectories = { mode = 'auto' } } })
-
 vim.lsp.config('oxlint', { root_markers = { '.oxlintrc.json', 'package.json', '.git' }, workspace_required = false })
 vim.lsp.config('tailwindcss', { filetypes = { 'html', 'css', 'javascriptreact', 'typescriptreact' } })
 vim.lsp.config('html', {})
@@ -351,9 +283,6 @@ vim.lsp.config('cssls', {})
 vim.lsp.config('jsonls', {})
 vim.lsp.config('pyright', { settings = { python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly' } } } })
 vim.lsp.config('clangd', { filetypes = { 'c', 'cpp' }, cmd = { 'clangd', '--background-index' } })
-
--- POTATO PC TWEAK: LTeX (LanguageTool) requires Java and massive amounts of memory. Disabled by default.
--- vim.lsp.config('ltex', { ... }) 
 
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
@@ -375,11 +304,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
 -- Auto-completion: nvim-cmp
 -- ------------------------------------------------------------------------
 local cmp_ok, cmp = pcall(require, 'cmp')
-local luasnip_ok, luasnip = pcall(require, 'luasnip')
 
-if cmp_ok and luasnip_ok then
+if cmp_ok then
   cmp.setup({
-    snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
+    -- Use Neovim Native Snippet Engine (Requires Neovim v0.10+)
+    snippet = { expand = function(args) vim.snippet.expand(args.body) end },
     mapping = cmp.mapping.preset.insert({
       ['<C-n>'] = cmp.mapping.select_next_item(),
       ['<C-p>'] = cmp.mapping.select_prev_item(),
@@ -388,7 +317,6 @@ if cmp_ok and luasnip_ok then
     }),
     sources = {
       { name = 'nvim_lsp' },
-      { name = 'luasnip' },
       { name = 'path' },
       { name = 'buffer', keyword_length = 3 },
     },
@@ -424,10 +352,9 @@ local function format_with_prettier(opts)
 
   local filepath = vim.api.nvim_buf_get_name(bufnr)
   
-  -- POTATO PC FIX: Prevent UI freeze by bailing on massive files (Node.js overhead is heavy)
   if filepath ~= '' then
     local stat = (vim.uv or vim.loop).fs_stat(filepath)
-    if stat and stat.size > 50000 then -- 50KB limit
+    if stat and stat.size > 50000 then 
       if not opts.silent then vim.notify('File too large for sync formatting', vim.log.levels.WARN) end
       return false
     end
