@@ -45,6 +45,28 @@ vim.opt.modelines = 5
 -- Set Built-in Native Colorscheme (Zero overhead)
 vim.cmd.colorscheme('habamax')
 
+-- Force transparent background to match terminal opacity
+vim.api.nvim_create_autocmd("ColorScheme", {
+  pattern = "*",
+  callback = function()
+    local transparent_groups = {
+      "Normal",       -- Main text background
+      "NormalNC",     -- Non-current window background
+      "NormalFloat",  -- Floating window backgrounds
+      "FloatBorder",  -- Floating window borders
+      "SignColumn",   -- The gutter where git signs/diagnostics live
+      "LineNr",       -- Line number column
+      "EndOfBuffer",  -- The empty space at the bottom of a file (the ~ symbols)
+    }
+    for _, group in ipairs(transparent_groups) do
+      vim.api.nvim_set_hl(0, group, { bg = "NONE", ctermbg = "NONE" })
+    end
+  end,
+})
+
+-- Re-apply the colorscheme to trigger the autocmd we just created
+vim.cmd.colorscheme('habamax')
+
 -- Disable unused legacy remote providers for instant startup
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
