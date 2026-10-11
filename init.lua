@@ -319,6 +319,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
     map('<leader>cd', vim.diagnostic.open_float, '[C]ode [D]iagnostic popup')
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
+    map('[d', vim.diagnostic.goto_prev)
+    map(']d', vim.diagnostic.goto_next)
   end,
 })
 
