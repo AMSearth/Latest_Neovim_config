@@ -10,37 +10,37 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Essential Editor Options
-vim.opt.background = 'dark'        -- Avoid terminal DSR latency on startup
-vim.opt.termguicolors = true       -- Enable true color support
-vim.opt.number = true              -- Show line numbers
-vim.opt.relativenumber = true      -- Show relative line numbers
+vim.opt.background = 'dark'
+vim.opt.termguicolors = true
+vim.opt.number = true
+vim.opt.relativenumber = true
 vim.opt.wrap = false
 vim.opt.linebreak = true
-vim.opt.mouse = 'a'                -- Enable mouse mode
-vim.opt.showmode = false           -- Don't show mode in command line (handled by statusline)
-vim.opt.breakindent = true         -- Enable break indent
-vim.opt.undofile = true            -- Save undo history
-vim.opt.ignorecase = true          -- Case-insensitive searching
-vim.opt.smartcase = true           -- Case-sensitive if capital letter included
-vim.opt.signcolumn = 'yes'         -- Always show the signcolumn
-vim.opt.updatetime = 250           -- Decrease update time
-vim.opt.timeoutlen = 300           -- Fast mapped sequence wait time (300ms for instant leader response)
-vim.opt.splitright = true          -- Split windows to the right
-vim.opt.splitbelow = true          -- Split windows to the bottom
-vim.opt.list = true                -- Show some invisible characters
+vim.opt.mouse = 'a'
+vim.opt.showmode = false
+vim.opt.breakindent = true
+vim.opt.undofile = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.signcolumn = 'yes'
+vim.opt.updatetime = 250
+vim.opt.timeoutlen = 300
+vim.opt.splitright = true
+vim.opt.splitbelow = true
+vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
-vim.opt.inccommand = 'split'       -- Preview substitutions live
-vim.opt.cursorline = true          -- Highlight current line
-vim.opt.scrolloff = 10             -- Keep 10 lines above/below cursor
-vim.opt.clipboard = 'unnamedplus'  -- Sync system clipboard
-vim.opt.confirm = true            -- Confirm to save changes before exiting modified buffer (Kickstart/LazyVim)
-vim.opt.smoothscroll = true       -- Smooth scrolling on wrapped lines (LazyVim)
-vim.opt.virtualedit = 'block'     -- Allow cursor to move where there is no text in visual block mode (LazyVim)
+vim.opt.inccommand = 'split'
+vim.opt.cursorline = true
+vim.opt.scrolloff = 10
+vim.opt.clipboard = 'unnamedplus'
+vim.opt.confirm = true
+vim.opt.smoothscroll = true
+vim.opt.virtualedit = 'block'
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
-vim.opt.modeline = true            -- Enable modelines
-vim.opt.modelines = 5              -- Check only top/bottom 5 lines for performance
+vim.opt.modeline = true
+vim.opt.modelines = 5
 
 -- Disable unused legacy remote providers for instant startup & clean healthcheck
 vim.g.loaded_perl_provider = 0
@@ -57,53 +57,38 @@ vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
   end,
 })
 
--- Basic Keymaps & Ergonomics (Kickstart / LazyVim / NvChad)
+-- Basic Keymaps & Ergonomics
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
-
--- Seamless Window Navigation Mappings (<C-h>, <C-j>, <C-k>, <C-l>)
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
-
--- Terminal Mode Ergonomics
+vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus left' })
+vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus right' })
+vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus down' })
+vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus up' })
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
-
--- Visual Mode Indent & Move Lines (LazyVim / NvChad standard)
-vim.keymap.set('v', '<', '<gv', { desc = 'Indent left and retain selection' })
-vim.keymap.set('v', '>', '>gv', { desc = 'Indent right and retain selection' })
+vim.keymap.set('v', '<', '<gv', { desc = 'Indent left' })
+vim.keymap.set('v', '>', '>gv', { desc = 'Indent right' })
 vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 
--- Highlight when yanking (copying) text
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
-  callback = function()
-    vim.hl.on_yank()
-  end,
+  callback = function() vim.hl.on_yank() end,
 })
 
--- Auto-sync buffers when files change on disk (LazyVim / NvChad)
 vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
   desc = 'Check if buffers changed on disk',
   callback = function()
-    if vim.o.buftype ~= 'nofile' then
-      vim.cmd('checktime')
-    end
+    if vim.o.buftype ~= 'nofile' then vim.cmd('checktime') end
   end,
 })
 
--- Restore cursor to last position when reopening a file (Kickstart / LazyVim / NvChad)
 vim.api.nvim_create_autocmd('BufReadPost', {
   desc = 'Go to last cursor position when opening buffer',
   callback = function(event)
     local exclude = { 'gitcommit', 'gitrebase' }
     local buf = event.buf
-    if vim.tbl_contains(exclude, vim.bo[buf].filetype) or vim.b[buf].last_pos then
-      return
-    end
+    if vim.tbl_contains(exclude, vim.bo[buf].filetype) or vim.b[buf].last_pos then return end
     vim.b[buf].last_pos = true
     local mark = vim.api.nvim_buf_get_mark(buf, '"')
     local lcount = vim.api.nvim_buf_line_count(buf)
@@ -113,7 +98,6 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   end,
 })
 
--- Auto-resize window splits on terminal window resize (LazyVim / NvChad)
 vim.api.nvim_create_autocmd('VimResized', {
   desc = 'Auto-resize splits when window is resized',
   callback = function()
@@ -123,22 +107,18 @@ vim.api.nvim_create_autocmd('VimResized', {
   end,
 })
 
--- Quick-close helper windows with 'q' (Kickstart / LazyVim)
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Close helper buffers with q',
   pattern = { 'help', 'lspinfo', 'man', 'notify', 'qf', 'query', 'checkhealth' },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
-    vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true, desc = 'Quit helper buffer' })
+    vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true })
   end,
 })
-
 
 -- ==========================================================================
 -- 2. NATIVE PLUGIN INSTALLATION (vim.pack)
 -- ==========================================================================
--- Using Neovim 0.12+ built-in `vim.pack.add` to install and load plugins.
--- On first boot, Neovim will prompt you to install missing plugins.
 vim.pack.add({
   'https://github.com/folke/tokyonight.nvim',
   'https://github.com/nvim-lua/plenary.nvim',
@@ -150,7 +130,7 @@ vim.pack.add({
   'https://github.com/catgoose/nvim-colorizer.lua',
   'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/williamboman/mason.nvim',
-  'https://github.com/williamboman/mason-lspconfig.nvim',
+  -- Removed mason-lspconfig.nvim (No auto-installing allowed)
   'https://github.com/hrsh7th/nvim-cmp',
   'https://github.com/hrsh7th/cmp-nvim-lsp',
   'https://github.com/hrsh7th/cmp-path',
@@ -165,21 +145,13 @@ vim.pack.add({
   'https://github.com/nvim-tree/nvim-tree.lua',
 })
 
-
 -- ==========================================================================
 -- 3. PLUGIN CONFIGURATION
 -- ==========================================================================
 
--- ------------------------------------------------------------------------
--- Keymap Popup & Hints: which-key.nvim
--- ------------------------------------------------------------------------
--- Keymap Popup & Hints: which-key.nvim
--- ------------------------------------------------------------------------
 local wk_ok, wk = pcall(require, 'which-key')
 if wk_ok then
-  wk.setup({
-    delay = 300,
-  })
+  wk.setup({ delay = 300 })
   wk.add({
     { '<leader>e', desc = 'Toggle File [E]xplorer' },
     { '<leader>s', group = '[S]earch' },
@@ -190,24 +162,15 @@ if wk_ok then
   })
 end
 
--- ------------------------------------------------------------------------
--- Theme: Tokyo Night (with Terminal Transparency)
--- ------------------------------------------------------------------------
 local tokyonight_ok, tokyonight = pcall(require, 'tokyonight')
 if tokyonight_ok then
   tokyonight.setup({
     transparent = true,
-    styles = {
-      sidebars = 'transparent',
-      floats = 'transparent',
-    },
+    styles = { sidebars = 'transparent', floats = 'transparent' },
   })
   pcall(vim.cmd.colorscheme, 'tokyonight-moon')
 end
 
--- ------------------------------------------------------------------------
--- Custom LSP Diagnostic Signs & UI
--- ------------------------------------------------------------------------
 vim.diagnostic.config({
   signs = {
     text = {
@@ -219,229 +182,69 @@ vim.diagnostic.config({
   },
   virtual_text = true,
   severity_sort = true,
-  float = {
-    border = 'rounded',
-    source = 'if_many',
-  },
+  float = { border = 'rounded', source = 'if_many' },
 })
 
--- ------------------------------------------------------------------------
--- Icons & Statusline: mini.icons & mini.statusline
--- ------------------------------------------------------------------------
 local icons_ok, icons = pcall(require, 'mini.icons')
 if icons_ok then
   icons.setup()
   pcall(icons.mock_nvim_web_devicons)
 end
 
--- ------------------------------------------------------------------------
--- File Explorer: nvim-tree (VS Code-like sidebar)
--- ------------------------------------------------------------------------
--- Disable netrw for nvim-tree
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
-
 local nvim_tree_ok, nvim_tree = pcall(require, 'nvim-tree')
 if nvim_tree_ok then
   nvim_tree.setup({
     sync_root_with_cwd = true,
     respect_buf_cwd = true,
-    view = {
-      side = 'left',
-      width = {
-        min = 20,
-        max = 50,
-        padding = 2,
-      },
-    },
-    renderer = {
-      highlight_git = true,
-      icons = {
-        show = {
-          file = true,
-          folder = true,
-          folder_arrow = true,
-          git = true,
-        },
-      },
-    },
-    filters = {
-      dotfiles = false,
-      custom = { '^.git$' },
-    },
-    update_focused_file = {
-      enable = true,
-      update_root = false,
-    },
-    git = {
-      enable = true,
-      ignore = false,
-    },
+    view = { side = 'left', width = { min = 20, max = 50, padding = 2 } },
+    renderer = { highlight_git = true, icons = { show = { git = true } } },
+    filters = { dotfiles = false, custom = { '^.git$' } },
+    git = { enable = true, ignore = false },
   })
-
-  -- <Space> e to toggle VS Code-like file explorer
   vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle File [E]xplorer' })
-
-  -- Auto-close Neovim if nvim-tree is the last remaining window
-  vim.api.nvim_create_autocmd('QuitPre', {
-    callback = function()
-      local tree_wins = {}
-      local floating_wins = {}
-      local wins = vim.api.nvim_list_wins()
-      for _, w in ipairs(wins) do
-        local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w))
-        if bufname:match('NvimTree_') ~= nil then
-          table.insert(tree_wins, w)
-        end
-        if vim.api.nvim_win_get_config(w).relative ~= '' then
-          table.insert(floating_wins, w)
-        end
-      end
-      if 1 == #wins - #floating_wins - #tree_wins then
-        for _, w in ipairs(tree_wins) do
-          vim.api.nvim_win_close(w, true)
-        end
-      end
-    end,
-  })
 end
-
-local mode_icons = {
-  ['n']     = '󰋜 NORMAL',
-  ['no']    = '󰋜 N-OPERATOR',
-  ['nov']   = '󰋜 N-OPERATOR',
-  ['noV']   = '󰋜 N-OPERATOR',
-  ['no\22'] = '󰋜 N-OPERATOR',
-  ['niI']   = '󰋜 NORMAL',
-  ['niR']   = '󰋜 NORMAL',
-  ['niV']   = '󰋜 NORMAL',
-  ['nt']    = '󰋜 NORMAL',
-  ['ntT']   = '󰋜 NORMAL',
-  ['v']     = '󰈈 VISUAL',
-  ['vs']    = '󰈈 VISUAL',
-  ['V']     = '󰈈 V-LINE',
-  ['Vs']    = '󰈈 V-LINE',
-  ['\22']   = '󰈈 V-BLOCK',
-  ['\22s']  = '󰈈 V-BLOCK',
-  ['s']     = '󰈈 SELECT',
-  ['S']     = '󰈈 S-LINE',
-  ['\19']   = '󰈈 S-BLOCK',
-  ['i']     = '󰏫 INSERT',
-  ['ic']    = '󰏫 INSERT',
-  ['ix']    = '󰏫 INSERT',
-  ['R']     = '󰛔 REPLACE',
-  ['Rc']    = '󰛔 REPLACE',
-  ['Rx']    = '󰛔 REPLACE',
-  ['Rv']    = '󰛔 V-REPLACE',
-  ['Rvc']   = '󰛔 V-REPLACE',
-  ['Rvx']   = '󰛔 V-REPLACE',
-  ['c']     = '󰞷 COMMAND',
-  ['cv']    = '󰞷 EX',
-  ['ce']    = '󰞷 EX',
-  ['r']     = '󰛔 PROMPT',
-  ['rm']    = '󰛔 MORE',
-  ['r?']    = '󰛔 CONFIRM',
-  ['!']     = ' SHELL',
-  ['t']     = ' TERMINAL',
-}
 
 local statusline_ok, statusline = pcall(require, 'mini.statusline')
-if statusline_ok then
-  statusline.setup({
-    use_icons = true,
-    content = {
-      active = function()
-        local mode, mode_hl = statusline.section_mode({ trunc_width = 120 })
-        local raw_mode = vim.api.nvim_get_mode().mode
-        local custom_mode = mode_icons[raw_mode] or (raw_mode:upper())
+if statusline_ok then statusline.setup({ use_icons = true }) end
 
-        local git           = statusline.section_git({ trunc_width = 40 })
-        local diff          = statusline.section_diff({ trunc_width = 75 })
-        local diagnostics   = statusline.section_diagnostics({ trunc_width = 75 })
-        local filename      = statusline.section_filename({ trunc_width = 140 })
-        local fileinfo      = statusline.section_fileinfo({ trunc_width = 120 })
-        local location      = statusline.section_location({ trunc_width = 75 })
-
-        return statusline.combine_groups({
-          { hl = mode_hl, strings = { custom_mode } },
-          { hl = 'MiniStatuslineDevinfo', strings = { git, diff, diagnostics } },
-          '%<',
-          { hl = 'MiniStatuslineFilename', strings = { filename } },
-          '%=',
-          { hl = 'MiniStatuslineFileinfo', strings = { fileinfo } },
-          { hl = mode_hl, strings = { location } },
-        })
-      end,
-    },
-  })
-end
-
--- ------------------------------------------------------------------------
--- Git Status Signs: gitsigns.nvim
--- ------------------------------------------------------------------------
 local gitsigns_ok, gitsigns = pcall(require, 'gitsigns')
 if gitsigns_ok then
   gitsigns.setup({
     signs = {
-      add          = { text = '┃' },
-      change       = { text = '┃' },
-      delete       = { text = '_' },
-      topdelete    = { text = '‾' },
-      changedelete = { text = '~' },
-      untracked    = { text = '┆' },
+      add = { text = '┃' }, change = { text = '┃' },
+      delete = { text = '_' }, topdelete = { text = '‾' },
+      changedelete = { text = '~' }, untracked = { text = '┆' },
     },
     on_attach = function(bufnr)
-      local function map(mode, l, r, opts)
-        opts = opts or {}
-        opts.buffer = bufnr
-        vim.keymap.set(mode, l, r, opts)
+      local map = function(mode, l, r, desc)
+        vim.keymap.set(mode, l, r, { buffer = bufnr, desc = desc })
       end
-
-      -- Navigation between git change hunks
       map('n', ']c', function()
-        if vim.wo.diff then
-          vim.cmd.normal({ ']c', bang = true })
-        else
-          gitsigns.nav_hunk('next')
-        end
-      end, { desc = 'Jump to next git change' })
-
+        if vim.wo.diff then vim.cmd.normal({ ']c', bang = true }) else gitsigns.nav_hunk('next') end
+      end, 'Jump to next git change')
       map('n', '[c', function()
-        if vim.wo.diff then
-          vim.cmd.normal({ '[c', bang = true })
-        else
-          gitsigns.nav_hunk('prev')
-        end
-      end, { desc = 'Jump to previous git change' })
-
-      -- Hunk Actions
-      map('n', '<leader>hp', gitsigns.preview_hunk, { desc = 'Git [H]unk [P]review' })
-      map('n', '<leader>hb', gitsigns.blame_line, { desc = 'Git [H]unk [B]lame line' })
-      map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'Git [H]unk [S]tage' })
-      map('n', '<leader>hr', gitsigns.reset_hunk, { desc = 'Git [H]unk [R]eset' })
+        if vim.wo.diff then vim.cmd.normal({ '[c', bang = true }) else gitsigns.nav_hunk('prev') end
+      end, 'Jump to previous git change')
+      map('n', '<leader>hp', gitsigns.preview_hunk, 'Git [H]unk [P]review')
+      map('n', '<leader>hs', gitsigns.stage_hunk, 'Git [H]unk [S]tage')
+      map('n', '<leader>hr', gitsigns.reset_hunk, 'Git [H]unk [R]eset')
     end,
   })
 end
 
--- ------------------------------------------------------------------------
--- Syntax Highlighting & Full-Stack Parsing: Treesitter
--- ------------------------------------------------------------------------
 local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
 if treesitter_ok then
   treesitter_configs.setup({
-    ensure_installed = {
-      'lua', 'vim', 'vimdoc', 'bash',
-      'c', 'cpp',
-      'html', 'css', 'javascript', 'typescript', 'tsx',
-      'python', 'json', 'json5', 'yaml', 'toml', 'sql',
-      'markdown', 'markdown_inline', 'dockerfile',
-    },
-    auto_install = true,
+    ensure_installed = {}, -- NO AUTO INSTALL
+    auto_install = false,  -- Strict block on background downloads
+    sync_install = false,
     highlight = {
       enable = true,
-      -- Performance: Disable on large files (> 100 KB) to prevent editor lag
       disable = function(lang, buf)
-        local max_filesize = 100 * 1024
+        -- POTATO PC TWEAK: Disable treesitter strictly on files > 50KB to prevent lag
+        local max_filesize = 50 * 1024 
         local ok, stats = pcall((vim.uv or vim.loop).fs_stat, vim.api.nvim_buf_get_name(buf))
         if ok and stats and stats.size > max_filesize then
           return true
@@ -453,258 +256,77 @@ if treesitter_ok then
   })
 end
 
--- Full-Stack HTML/JSX/TSX Auto-tagging & Auto-renaming
 local autotag_ok, autotag = pcall(require, 'nvim-ts-autotag')
-if autotag_ok then
-  autotag.setup({
-    opts = {
-      enable_close = true,
-      enable_rename = true,
-      enable_close_on_slash = true,
-    },
-  })
-end
+if autotag_ok then autotag.setup({ opts = { enable_close = true, enable_rename = true } }) end
 
--- Full-Stack Surround Operations (Quotes, Brackets, HTML Tags)
 local surround_ok, surround = pcall(require, 'mini.surround')
-if surround_ok then
-  surround.setup()
-end
+if surround_ok then surround.setup() end
 
--- Full-Stack Inline Color Highlighter (CSS, Tailwind, Hex, RGB, HSL)
 local colorizer_ok, colorizer = pcall(require, 'colorizer')
 if colorizer_ok then
   colorizer.setup({
-    filetypes = { '*' },
+    -- POTATO PC TWEAK: Only run regex color checks on specific front-end files
+    filetypes = { 'css', 'scss', 'html', 'javascript', 'javascriptreact', 'typescriptreact' },
     user_default_options = {
-      RGB = true,
-      RRGGBB = true,
-      names = false,
-      RRGGBBAA = true,
-      AARRGGBB = true,
-      rgb_fn = true,
-      hsl_fn = true,
-      css = true,
-      css_fn = true,
-      tailwind = true,
-      mode = 'background',
+      RGB = true, RRGGBB = true, names = false, RRGGBBAA = true, AARRGGBB = true,
+      rgb_fn = true, hsl_fn = true, css = true, css_fn = true, tailwind = true, mode = 'background',
     },
   })
 end
 
--- ------------------------------------------------------------------------
--- File Searching: Telescope
--- ------------------------------------------------------------------------
 local telescope_ok, telescope = pcall(require, 'telescope')
 if telescope_ok then
   local previewers = require('telescope.previewers')
-
-  -- Prevent previewing large files or binaries (avoids memory exhaustion / crashes)
   local _bad_extensions = {
     'sqlite3', 'db', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'zip', 'tar',
     'gz', '7z', 'rar', 'pyc', 'so', 'dylib', 'dll', 'woff', 'woff2', 'ttf',
     'eot', 'mp4', 'mp3', 'mkv', 'avi', 'mov', 'iso', 'bin', 'exe'
   }
 
-  -- Synchronous and thread-safe buffer previewer maker
   local safe_previewer_maker = function(filepath, bufnr, opts)
     opts = opts or {}
     filepath = vim.fn.expand(filepath)
-
-    -- Check file extension against binary blacklist
     local ext = string.match(filepath, '%.([a-zA-Z0-9]+)$')
-    if ext and vim.tbl_contains(_bad_extensions, string.lower(ext)) then
-      return
-    end
+    if ext and vim.tbl_contains(_bad_extensions, string.lower(ext)) then return end
 
-    -- Check file size synchronously (limit previews to 100KB to prevent memory exhaustion / race conditions)
     local stat = (vim.uv or vim.loop).fs_stat(filepath)
-    if not stat or stat.size > 100000 then
-      return
-    end
+    if not stat or stat.size > 100000 then return end -- Skip preview for >100KB
 
     previewers.buffer_previewer_maker(filepath, bufnr, opts)
-  end
-
-  -- Detect fd / fdfind executable with fallback to rg
-  local fd_cmd = vim.fn.executable('fd') == 1 and 'fd' or (vim.fn.executable('fdfind') == 1 and 'fdfind' or nil)
-  local find_files_cmd = nil
-  if fd_cmd then
-    find_files_cmd = {
-      fd_cmd,
-      '--type', 'f',
-      '--strip-cwd-prefix',
-      '--hidden',
-      '--exclude', '.git',
-      '--exclude', '.venv',
-      '--exclude', 'venv',
-      '--exclude', 'env',
-      '--exclude', 'node_modules',
-      '--exclude', '__pycache__',
-      '--exclude', '*.sqlite3',
-      '--exclude', '*.pyc',
-      '--exclude', '.cache',
-      '--exclude', '.local',
-      '--exclude', '.cargo',
-      '--exclude', '.rustup',
-      '--exclude', '.npm',
-      '--exclude', 'snap',
-    }
-  elseif vim.fn.executable('rg') == 1 then
-    find_files_cmd = {
-      'rg',
-      '--files',
-      '--hidden',
-      '--glob=!.git/*',
-      '--glob=!venv/*',
-      '--glob=!.venv/*',
-      '--glob=!env/*',
-      '--glob=!node_modules/*',
-      '--glob=!__pycache__/*',
-      '--glob=!*.sqlite3',
-      '--glob=!*.pyc',
-      '--glob=!.cache/*',
-      '--glob=!.local/*',
-      '--glob=!.cargo/*',
-      '--glob=!.rustup/*',
-      '--glob=!.npm/*',
-      '--glob=!snap/*',
-    }
   end
 
   telescope.setup({
     defaults = {
       buffer_previewer_maker = safe_previewer_maker,
-      file_ignore_patterns = {
-        '%.git/',
-        'venv/.*',
-        '%.venv/.*',
-        'env/.*',
-        'node_modules/.*',
-        '__pycache__/.*',
-        '%.sqlite3',
-        '%.db',
-        '%.pyc',
-        'staticfiles/.*',
-        'media/.*',
-        '%.cache/.*',
-        '%.local/.*',
-        '%.cargo/.*',
-        '%.rustup/.*',
-        '%.npm/.*',
-        'snap/.*',
-        'Downloads/.*',
-      },
-      vimgrep_arguments = {
-        'rg',
-        '--color=never',
-        '--no-heading',
-        '--with-filename',
-        '--line-number',
-        '--column',
-        '--smart-case',
-        '--hidden',
-        '--glob=!.git/*',
-        '--glob=!venv/*',
-        '--glob=!.venv/*',
-        '--glob=!node_modules/*',
-        '--glob=!__pycache__/*',
-        '--glob=!*.sqlite3',
-        '--glob=!.cache/*',
-        '--glob=!.local/*',
-        '--glob=!.cargo/*',
-        '--glob=!.rustup/*',
-        '--glob=!.npm/*',
-        '--glob=!snap/*',
-      },
-    },
-    pickers = {
-      find_files = {
-        hidden = true,
-        find_command = find_files_cmd,
-      },
+      file_ignore_patterns = { '%.git/', 'node_modules/.*', '%.cache/.*' },
     },
     extensions = {
-      ['ui-select'] = {
-        require('telescope.themes').get_dropdown(),
-      },
+      ['ui-select'] = { require('telescope.themes').get_dropdown() },
     },
   })
   pcall(telescope.load_extension, 'ui-select')
 
   local builtin_ok, builtin = pcall(require, 'telescope.builtin')
   if builtin_ok then
-    -- Helper function to dynamically resolve the current folder or project root
-    -- This prevents Telescope from searching the entire $HOME directory
-    local function get_current_search_dir()
-      local buf = vim.api.nvim_get_current_buf()
-      local bufname = vim.api.nvim_buf_get_name(buf)
-      local home = vim.env.HOME or os.getenv('HOME')
-
-      if bufname and bufname ~= '' and vim.bo[buf].buftype == '' then
-        local buf_dir = vim.fs.dirname(bufname)
-        if buf_dir and buf_dir ~= '' then
-          local root = vim.fs.root(buf, { '.git', 'package.json', 'Cargo.toml', 'pyproject.toml', 'go.mod', 'Makefile', '.root' })
-          if root and root ~= home then
-            return root
-          end
-          if buf_dir ~= home then
-            return buf_dir
-          end
-        end
-      end
-
-      return vim.fn.getcwd()
-    end
-
-    local function find_files_in_folder()
-      local search_dir = get_current_search_dir()
-      builtin.find_files({
-        cwd = search_dir,
-        prompt_title = 'Find Files (' .. vim.fs.basename(search_dir) .. ')',
-      })
-    end
-
-    local function live_grep_in_folder()
-      local search_dir = get_current_search_dir()
-      builtin.live_grep({
-        cwd = search_dir,
-        prompt_title = 'Live Grep (' .. vim.fs.basename(search_dir) .. ')',
-      })
-    end
-
-    local function grep_string_in_folder()
-      local search_dir = get_current_search_dir()
-      builtin.grep_string({
-        cwd = search_dir,
-        prompt_title = 'Grep String (' .. vim.fs.basename(search_dir) .. ')',
-      })
-    end
-
-    vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
-    vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-    vim.keymap.set('n', '<leader>sf', find_files_in_folder, { desc = '[S]earch [F]iles (Current Folder/Root)' })
-    vim.keymap.set('n', '<leader>sw', grep_string_in_folder, { desc = '[S]earch current [W]ord (Current Folder/Root)' })
-    vim.keymap.set('n', '<leader>sg', live_grep_in_folder, { desc = '[S]earch by [G]rep (Current Folder/Root)' })
-    vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
-    vim.keymap.set('n', '<leader>sb', builtin.current_buffer_fuzzy_find, { desc = '[S]earch current [B]uffer' })
+    vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+    vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
     vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
-
-    -- Explicit CWD search mappings if needed
-    vim.keymap.set('n', '<leader>sF', function() builtin.find_files({ cwd = vim.fn.getcwd() }) end, { desc = '[S]earch [F]iles in CWD' })
-    vim.keymap.set('n', '<leader>sG', function() builtin.live_grep({ cwd = vim.fn.getcwd() }) end, { desc = '[S]earch by [G]rep in CWD' })
   end
 end
 
 -- ------------------------------------------------------------------------
--- LSP Configuration & Mason (Language Servers) - Full Stack Ready
+-- LSP Configuration & Mason 
 -- ------------------------------------------------------------------------
 local mason_ok, mason = pcall(require, 'mason')
 if mason_ok then
-  mason.setup()
+  mason.setup({
+    ui = {
+      -- SECURITY & PERF: Don't phone home to check for registry updates on editor start
+      check_outdated_packages_on_open = false,
+    }
+  })
 end
 
--- 1. Setup global capabilities for nvim-cmp auto-completion
 local lspconfig_ok, lspconfig = pcall(require, 'lspconfig')
 local cmp_lsp_ok, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
 if lspconfig_ok and cmp_lsp_ok then
@@ -716,125 +338,23 @@ if lspconfig_ok and cmp_lsp_ok then
   )
 end
 
--- 2. Configure specific servers via the new native vim.lsp.config API
-vim.lsp.config('lua_ls', {
-  settings = {
-    Lua = {
-      diagnostics = { globals = { 'vim' } },
-    },
-  },
-})
+vim.lsp.config('lua_ls', { settings = { Lua = { diagnostics = { globals = { 'vim' } } } } })
+vim.lsp.config('ts_ls', { settings = { typescript = { inlayHints = { includeInlayParameterNameHints = 'all' } } } })
 
--- Full Stack Web: TypeScript / JavaScript / React / Next.js
-vim.lsp.config('ts_ls', {
-  settings = {
-    typescript = {
-      inlayHints = {
-        includeInlayParameterNameHints = 'all',
-        includeInlayVariableTypeHints = true,
-      },
-    },
-    javascript = {
-      inlayHints = {
-        includeInlayParameterNameHints = 'all',
-        includeInlayVariableTypeHints = true,
-      },
-    },
-  },
-})
+-- POTATO PC TWEAK: Disabled ESLint entirely. Use Oxlint instead (Rust-based, uses almost 0 RAM).
+-- vim.lsp.config('eslint', { settings = { workingDirectories = { mode = 'auto' } } })
 
--- Full Stack Web: ESLint (Linting Diagnostics & Auto-fix for JS / TS / React)
-vim.lsp.config('eslint', {
-  settings = {
-    workingDirectories = { mode = 'auto' },
-  },
-})
-
--- Full Stack Web: Oxlint (High-performance Rust-based JS/TS Linter)
-vim.lsp.config('oxlint', {
-  root_markers = { '.oxlintrc.json', '.oxlintrc.jsonc', 'oxlint.config.ts', 'package.json', '.git' },
-  workspace_required = false,
-})
-
--- Full Stack Web: Tailwind CSS
-vim.lsp.config('tailwindcss', {
-  filetypes = { 'html', 'css', 'scss', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue', 'svelte' },
-})
-
--- Full Stack Web: HTML & CSS
+vim.lsp.config('oxlint', { root_markers = { '.oxlintrc.json', 'package.json', '.git' }, workspace_required = false })
+vim.lsp.config('tailwindcss', { filetypes = { 'html', 'css', 'javascriptreact', 'typescriptreact' } })
 vim.lsp.config('html', {})
 vim.lsp.config('cssls', {})
-
--- Full Stack Web: Emmet (HTML/JSX expansion)
-vim.lsp.config('emmet_language_server', {
-  filetypes = { 'css', 'html', 'javascriptreact', 'less', 'sass', 'scss', 'typescriptreact', 'vue' },
-})
-
--- Full Stack Data & DevOps: JSON, Docker, SQL
 vim.lsp.config('jsonls', {})
-vim.lsp.config('dockerls', {})
-vim.lsp.config('sqlls', {})
+vim.lsp.config('pyright', { settings = { python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly' } } } })
+vim.lsp.config('clangd', { filetypes = { 'c', 'cpp' }, cmd = { 'clangd', '--background-index' } })
 
--- Backend: Python (Django / FastAPI / Flask)
-vim.lsp.config('pyright', {
-  settings = {
-    python = {
-      analysis = {
-        autoSearchPaths = true,
-        useLibraryCodeForTypes = true,
-        diagnosticMode = 'openFilesOnly',
-        ignore = { 'venv', '.venv', 'env', 'node_modules', '__pycache__' },
-      },
-    },
-  },
-})
+-- POTATO PC TWEAK: LTeX (LanguageTool) requires Java and massive amounts of memory. Disabled by default.
+-- vim.lsp.config('ltex', { ... }) 
 
--- Systems: C / C++
-vim.lsp.config('clangd', {
-  filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
-  cmd = {
-    'clangd',
-    '--background-index',
-    '--clang-tidy',
-    '--header-insertion=iwyu',
-    '--completion-style=detailed',
-    '--function-arg-placeholders',
-    '--fallback-style=llvm',
-    '--enable-config',
-    '--query-driver=/usr/bin/g++,/usr/bin/c++,/usr/bin/clang++,/usr/bin/*g++',
-  },
-})
-
--- Novel & Prose Writing / Grammar: LTeX (LanguageTool)
--- Deep syntactic grammar analysis, sentence structure checks, and accurate word correction
-vim.lsp.config('ltex', {
-  filetypes = { 'markdown', 'text', 'gitcommit' },
-  settings = {
-    ltex = {
-      language = 'en-US',
-      enabled = { 'markdown', 'text', 'gitcommit' },
-      sentenceCacheSize = 5000,
-      additionalRules = {
-        enablePickyRules = true,
-        motherTongue = 'en-US',
-      },
-    },
-  },
-})
-
--- 3. Initialize mason-lspconfig
-local mason_lsp_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
-if mason_lsp_ok then
-  mason_lspconfig.setup({
-    ensure_installed = {
-      'ltex',
-      'eslint',
-      'oxlint',
-    },
-  })
-end
-
--- 4. Keybindings & Autocmds for when an LSP attaches
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
   callback = function(event)
@@ -842,61 +362,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
     local map = function(keys, func, desc)
       vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
     end
-
-    local telescope_builtin = nil
-    pcall(function() telescope_builtin = require('telescope.builtin') end)
-
-    map('gd', telescope_builtin and telescope_builtin.lsp_definitions or vim.lsp.buf.definition, '[G]oto [D]efinition')
-    map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-    map('gr', telescope_builtin and telescope_builtin.lsp_references or vim.lsp.buf.references, '[G]oto [R]eferences')
-    map('gI', telescope_builtin and telescope_builtin.lsp_implementations or vim.lsp.buf.implementation, '[G]oto [I]mplementation')
-    map('<leader>D', telescope_builtin and telescope_builtin.lsp_type_definitions or vim.lsp.buf.type_definition, 'Type [D]efinition')
+    map('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+    map('gr', vim.lsp.buf.references, '[G]oto [R]eferences')
     map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
     map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-    map('<leader>cf', function()
-      if not (vim.g.format_with_prettier and vim.g.format_with_prettier({ bufnr = event.buf, silent = false })) then
-        vim.lsp.buf.format({ async = true })
-      end
-    end, '[C]ode [F]ormat Buffer (Prettier / LSP)')
-    map('<leader>cp', function()
-      if vim.g.format_with_prettier then
-        vim.g.format_with_prettier({ bufnr = event.buf, force = true, silent = false })
-      end
-    end, '[C]ode [P]rettier Format')
     map('<leader>cd', vim.diagnostic.open_float, '[C]ode [D]iagnostic popup')
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
-    map('[d', vim.diagnostic.goto_prev, 'Previous Diagnostic')
-    map(']d', vim.diagnostic.goto_next, 'Next Diagnostic')
-
-    -- Toggle Inlay Hints if supported by LSP (Kickstart standard)
-    if client and client:supports_method('textDocument/inlayHint') then
-      map('<leader>th', function()
-        local current = vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf })
-        vim.lsp.inlay_hint.enable(not current, { bufnr = event.buf })
-      end, '[T]oggle Inlay [H]ints')
-    end
-
-    -- Highlight symbol under cursor when idle (if supported by LSP)
-    if client and client:supports_method('textDocument/documentHighlight') then
-      local highlight_augroup = vim.api.nvim_create_augroup('lsp-highlight-' .. event.buf, { clear = true })
-      vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
-        buffer = event.buf,
-        group = highlight_augroup,
-        callback = vim.lsp.buf.document_highlight,
-      })
-      vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-        buffer = event.buf,
-        group = highlight_augroup,
-        callback = vim.lsp.buf.clear_references,
-      })
-      vim.api.nvim_create_autocmd('LspDetach', {
-        group = vim.api.nvim_create_augroup('lsp-detach-' .. event.buf, { clear = true }),
-        callback = function(detach_event)
-          vim.lsp.buf.clear_references()
-          vim.api.nvim_clear_autocmds({ group = 'lsp-highlight-' .. detach_event.buf })
-        end,
-      })
-    end
   end,
 })
 
@@ -908,30 +379,12 @@ local luasnip_ok, luasnip = pcall(require, 'luasnip')
 
 if cmp_ok and luasnip_ok then
   cmp.setup({
-    snippet = {
-      expand = function(args)
-        luasnip.lsp_expand(args.body)
-      end,
-    },
-    completion = { completeopt = 'menu,menuone,noinsert' },
+    snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
     mapping = cmp.mapping.preset.insert({
       ['<C-n>'] = cmp.mapping.select_next_item(),
       ['<C-p>'] = cmp.mapping.select_prev_item(),
-      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-      ['<C-f>'] = cmp.mapping.scroll_docs(4),
-      ['<C-y>'] = cmp.mapping.confirm({ select = true }), -- Accept completion
-      ['<C-Space>'] = cmp.mapping.complete({}),           -- Trigger completion manually
-      -- Snippet Jump navigation
-      ['<C-l>'] = cmp.mapping(function()
-        if luasnip.expand_or_locally_jumpable() then
-          luasnip.expand_or_jump()
-        end
-      end, { 'i', 's' }),
-      ['<C-h>'] = cmp.mapping(function()
-        if luasnip.locally_jumpable(-1) then
-          luasnip.jump(-1)
-        end
-      end, { 'i', 's' }),
+      ['<C-y>'] = cmp.mapping.confirm({ select = true }),
+      ['<C-Space>'] = cmp.mapping.complete({}),
     }),
     sources = {
       { name = 'nvim_lsp' },
@@ -940,229 +393,82 @@ if cmp_ok and luasnip_ok then
       { name = 'buffer', keyword_length = 3 },
     },
   })
-
-  -- Clear LuaSnip session on leaving insert mode to prevent ghost jumps
-  vim.api.nvim_create_autocmd('ModeChanged', {
-    pattern = '*:n',
-    callback = function()
-      if ((vim.v.event.old_mode == 's' and vim.v.event.new_mode == 'n') or vim.v.event.old_mode == 'i')
-          and luasnip.session.current_nodes[vim.api.nvim_get_current_buf()]
-          and not luasnip.session.jump_active
-      then
-        luasnip.unlink_current()
-      end
-    end,
-  })
 end
 
--- ------------------------------------------------------------------------
--- Auto-pairing: nvim-autopairs
--- ------------------------------------------------------------------------
 local autopairs_ok, autopairs = pcall(require, 'nvim-autopairs')
-if autopairs_ok then
-  autopairs.setup({
-    check_ts = true, -- Use treesitter to check for a pair
-  })
-
-  -- Automatically add `(` after selecting a function or method from nvim-cmp
-  if cmp_ok then
-    local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-    cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
-  end
-end
+if autopairs_ok then autopairs.setup({ check_ts = true }) end
 
 -- ------------------------------------------------------------------------
--- Formatter: Prettier & Format-on-Save Integration (ESLint + Prettier)
+-- Formatter: Prettier & Format-on-Save Integration
 -- ------------------------------------------------------------------------
 local prettier_supported_fts = {
-  javascript = true,
-  javascriptreact = true,
-  typescript = true,
-  typescriptreact = true,
-  vue = true,
-  svelte = true,
-  css = true,
-  scss = true,
-  less = true,
-  html = true,
-  json = true,
-  jsonc = true,
-  yaml = true,
-  markdown = true,
-  graphql = true,
+  javascript = true, javascriptreact = true, typescript = true, typescriptreact = true,
+  css = true, scss = true, html = true, json = true, yaml = true, markdown = true,
 }
 
 local function get_prettier_bin()
-  -- 1. Check local node_modules in project
   local local_bin = vim.fn.findfile('node_modules/.bin/prettier', '.;')
-  if local_bin ~= '' and vim.fn.executable(local_bin) == 1 then
-    return vim.fn.fnamemodify(local_bin, ':p')
-  end
-  -- 2. Check Mason installation
-  local mason_bin = vim.fn.expand('~/.local/share/nvim/mason/bin/prettier')
-  if vim.fn.executable(mason_bin) == 1 then
-    return mason_bin
-  end
-  -- 3. Check system PATH
+  if local_bin ~= '' and vim.fn.executable(local_bin) == 1 then return vim.fn.fnamemodify(local_bin, ':p') end
   local path_bin = vim.fn.exepath('prettier')
-  if path_bin ~= '' then
-    return path_bin
-  end
+  if path_bin ~= '' then return path_bin end
   return nil
 end
 
 local function format_with_prettier(opts)
   opts = opts or {}
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
-  if not vim.api.nvim_buf_is_valid(bufnr) then
-    return false
-  end
+  if not vim.api.nvim_buf_is_valid(bufnr) then return false end
 
   local ft = vim.bo[bufnr].filetype
-  if not prettier_supported_fts[ft] and not opts.force then
-    if not opts.silent then
-      vim.notify('Prettier does not support filetype: ' .. (ft ~= '' and ft or 'unknown'), vim.log.levels.WARN)
+  if not prettier_supported_fts[ft] and not opts.force then return false end
+
+  local filepath = vim.api.nvim_buf_get_name(bufnr)
+  
+  -- POTATO PC FIX: Prevent UI freeze by bailing on massive files (Node.js overhead is heavy)
+  if filepath ~= '' then
+    local stat = (vim.uv or vim.loop).fs_stat(filepath)
+    if stat and stat.size > 50000 then -- 50KB limit
+      if not opts.silent then vim.notify('File too large for sync formatting', vim.log.levels.WARN) end
+      return false
     end
-    return false
   end
 
   local prettier = get_prettier_bin()
-  if not prettier then
-    if not opts.silent then
-      vim.notify('Prettier executable not found. Install via Mason (:MasonInstall prettier)', vim.log.levels.ERROR)
-    end
-    return false
-  end
+  if not prettier then return false end
 
-  local filepath = vim.api.nvim_buf_get_name(bufnr)
-  local args = { prettier }
-
-  if filepath ~= '' then
-    table.insert(args, '--stdin-filepath')
-    table.insert(args, filepath)
-  else
-    table.insert(args, '--parser')
-    local parser_map = {
-      javascript = 'babel',
-      javascriptreact = 'babel',
-      typescript = 'typescript',
-      typescriptreact = 'typescript',
-      html = 'html',
-      css = 'css',
-      scss = 'scss',
-      json = 'json',
-      yaml = 'yaml',
-      markdown = 'markdown',
-      graphql = 'graphql',
-      vue = 'vue',
-      svelte = 'html',
-    }
-    table.insert(args, parser_map[ft] or 'babel')
-  end
-
+  local args = { prettier, '--stdin-filepath', filepath ~= '' and filepath or 'dummy.' .. ft }
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local input = table.concat(lines, '\n')
 
   local res = vim.system(args, { stdin = input }):wait()
   if res.code == 0 and res.stdout and #res.stdout > 0 then
     local new_lines = vim.split(res.stdout, '\n', { plain = true })
-    if #new_lines > 0 and new_lines[#new_lines] == '' then
-      table.remove(new_lines, #new_lines)
-    end
-
-    local orig_text = table.concat(lines, '\n')
-    local formatted_text = table.concat(new_lines, '\n')
-
-    if orig_text ~= formatted_text then
-      local current_win = vim.api.nvim_get_current_win()
-      local win_buf = vim.api.nvim_win_get_buf(current_win)
-      if win_buf == bufnr then
-        local cursor = vim.api.nvim_win_get_cursor(current_win)
-        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-        local count = vim.api.nvim_buf_line_count(bufnr)
-        if cursor[1] > count then
-          cursor[1] = count
-        end
-        pcall(vim.api.nvim_win_set_cursor, current_win, cursor)
-      else
-        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-      end
-      if not opts.silent then
-        vim.notify('Formatted with Prettier', vim.log.levels.INFO)
-      end
-    elseif not opts.silent then
-      vim.notify('Prettier: Buffer already formatted', vim.log.levels.INFO)
+    if #new_lines > 0 and new_lines[#new_lines] == '' then table.remove(new_lines, #new_lines) end
+    if table.concat(lines, '\n') ~= table.concat(new_lines, '\n') then
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
     end
     return true
-  elseif res.code ~= 0 then
-    if not opts.silent then
-      local err = res.stderr or 'Prettier formatting failed'
-      vim.notify('Prettier error: ' .. err, vim.log.levels.ERROR)
-    end
-    return false
   end
   return false
 end
 
--- Expose function for keymaps & autocmds
 vim.g.format_with_prettier = format_with_prettier
-vim.g.prettier_autoformat = true -- Enable auto format on save by default
+vim.g.prettier_autoformat = true
 
--- User Commands
-vim.api.nvim_create_user_command('Prettier', function()
-  format_with_prettier({ force = true, silent = false })
-end, { desc = 'Format current buffer with Prettier' })
-
-vim.api.nvim_create_user_command('PrettierToggle', function()
-  vim.g.prettier_autoformat = not vim.g.prettier_autoformat
-  local status = vim.g.prettier_autoformat and 'enabled' or 'disabled'
-  vim.notify('Prettier format-on-save ' .. status, vim.log.levels.INFO)
-end, { desc = 'Toggle Prettier format-on-save' })
-
--- Global Keybindings (Work across all buffers, whether LSP is attached or not)
-vim.keymap.set('n', '<leader>cp', function()
-  format_with_prettier({ force = true, silent = false })
-end, { desc = '[C]ode [P]rettier Format' })
-
-vim.keymap.set('n', '<leader>cf', function()
-  if not format_with_prettier({ silent = false }) then
-    vim.lsp.buf.format({ async = true })
-  end
-end, { desc = '[C]ode [F]ormat Buffer (Prettier / LSP)' })
-
+vim.keymap.set('n', '<leader>cp', function() format_with_prettier({ force = true, silent = false }) end, { desc = '[C]ode [P]rettier Format' })
 vim.keymap.set('n', '<leader>tp', function()
   vim.g.prettier_autoformat = not vim.g.prettier_autoformat
-  local status = vim.g.prettier_autoformat and 'enabled' or 'disabled'
-  vim.notify('Prettier format-on-save ' .. status, vim.log.levels.INFO)
-end, { desc = '[T]oggle [P]rettier format-on-save' })
+  vim.notify('Prettier auto-format ' .. (vim.g.prettier_autoformat and 'ON' or 'OFF'))
+end, { desc = 'Toggle auto-format' })
 
--- Auto-Format On Save (BufWritePre) for Prettier & ESLint
 vim.api.nvim_create_autocmd('BufWritePre', {
-  desc = 'Auto-format buffer with Prettier & ESLint on save',
+  desc = 'Auto-format buffer with Prettier on save',
   group = vim.api.nvim_create_augroup('kickstart-format-on-save', { clear = true }),
   callback = function(event)
-    if not vim.g.prettier_autoformat then
-      return
+    if vim.g.prettier_autoformat then
+      local oxlint_clients = vim.lsp.get_clients({ bufnr = event.buf, name = 'oxlint' })
+      if #oxlint_clients > 0 then pcall(vim.cmd, 'silent! LspOxlintFixAll') end
+      format_with_prettier({ bufnr = event.buf, silent = true })
     end
-
-    -- Run ESLint auto-fixes first if ESLint language server is active on buffer
-    local eslint_clients = vim.lsp.get_clients({ bufnr = event.buf, name = 'eslint' })
-    if #eslint_clients > 0 then
-      pcall(vim.cmd, 'silent! EslintFixAll')
-    end
-
-    -- Run Oxlint auto-fixes if Oxlint language server is active on buffer
-    local oxlint_clients = vim.lsp.get_clients({ bufnr = event.buf, name = 'oxlint' })
-    if #oxlint_clients > 0 then
-      pcall(vim.cmd, 'silent! LspOxlintFixAll')
-    end
-
-    -- Format with Prettier
-    format_with_prettier({ bufnr = event.buf, silent = true })
   end,
 })
-
--- ==========================================================================
--- END OF CONFIG
--- ==========================================================================
-
