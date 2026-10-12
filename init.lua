@@ -2,7 +2,7 @@
 if vim.loader then vim.loader.enable() end
 
 -- ==========================================================================
--- 2. PERFORMANCE OPTIMIZATIONS (POTATO PC & ROBUSTNESS)
+-- 2. PERFORMANCE OPTIMIZATIONS (POTATO PC)
 -- ==========================================================================
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
@@ -21,7 +21,7 @@ end
 
 vim.opt.shada = "'20,<50,s10,h"  -- Limit history file size to prevent slow startups
 vim.opt.synmaxcol = 200          -- Stop syntax highlighting on long lines (minified JS/CSS)
-vim.opt.updatetime = 500         -- Lowered from 1000 for responsive diagnostics, but higher than default 250 for CPU
+vim.opt.updatetime = 500         -- Lower disk I/O, but keeps diagnostics responsive
 vim.opt.swapfile = false         -- Prevent continuous disk I/O
 
 -- ==========================================================================
@@ -103,10 +103,10 @@ vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
   end,
 })
 
--- Highlight Yanked Text
+-- Highlight Yanked Text (v0.11 FIX: using vim.highlight instead of vim.hl)
 vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
-  callback = function() vim.hl.on_yank() end,
+  callback = function() vim.highlight.on_yank() end,
 })
 
 -- ==========================================================================
@@ -125,7 +125,7 @@ vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 
 -- ==========================================================================
--- 7. BARE MINIMUM PLUGINS
+-- 7. BARE MINIMUM PLUGINS (No Mason, No nvim-lspconfig)
 -- ==========================================================================
 vim.pack.add({
   'https://github.com/nvim-lua/plenary.nvim',
@@ -133,7 +133,6 @@ vim.pack.add({
   'https://github.com/nvim-treesitter/nvim-treesitter',
   'https://github.com/windwp/nvim-ts-autotag',
   'https://github.com/echasnovski/mini.surround',
-  'https://github.com/neovim/nvim-lspconfig',
   'https://github.com/hrsh7th/nvim-cmp',
   'https://github.com/hrsh7th/cmp-nvim-lsp',
   'https://github.com/hrsh7th/cmp-path',
@@ -145,8 +144,6 @@ vim.pack.add({
 -- ==========================================================================
 -- 8. PLUGIN CONFIGURATION
 -- ==========================================================================
-
--- Diagnostics & Git
 vim.diagnostic.config({
   signs = { text = { [1] = 'E', [2] = 'W', [3] = 'I', [4] = 'H' } },
   virtual_text = true, severity_sort = true, float = { border = 'rounded' },
@@ -155,7 +152,6 @@ vim.diagnostic.config({
 local gitsigns_ok, gitsigns = pcall(require, 'gitsigns')
 if gitsigns_ok then gitsigns.setup({ signs = { add = { text = '┃' }, change = { text = '┃' } } }) end
 
--- Treesitter (Syntax Highlighting)
 local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
 if treesitter_ok then
   treesitter_configs.setup({
@@ -178,7 +174,6 @@ if autotag_ok then autotag.setup({ opts = { enable_close = true } }) end
 local surround_ok, surround = pcall(require, 'mini.surround')
 if surround_ok then surround.setup() end
 
--- Telescope (Fuzzy Finder)
 local telescope_ok, telescope = pcall(require, 'telescope')
 if telescope_ok then
   local previewers = require('telescope.previewers')
@@ -194,38 +189,46 @@ if telescope_ok then
 end
 
 -- ------------------------------------------------------------------------
--- LSP Configuration (Robust Fallbacks)
+-- 9. LSP CONFIGURATION (Native Neovim v0.11+)
 -- ------------------------------------------------------------------------
-local lspconfig_ok, lspconfig = pcall(require, 'lspconfig')
-
-if lspconfig_ok then
-  -- GRACEFUL FALLBACK: If cmp_nvim_lsp isn't downloaded yet, use default capabilities so LSP doesn't crash on boot.
-  local caps = vim.lsp.protocol.make_client_capabilities()
-  local cmp_lsp_ok, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
-  if cmp_lsp_ok then
-    caps = vim.tbl_deep_extend('force', caps, cmp_nvim_lsp.default_capabilities())
-  end
-
-  lspconfig.lua_ls.setup({ capabilities = caps, settings = { Lua = { diagnostics = { globals = { 'vim' } } } } })
-  lspconfig.ts_ls.setup({ capabilities = caps })
-  lspconfig.html.setup({ capabilities = caps })
-  lspconfig.cssls.setup({ capabilities = caps })
-  lspconfig.jsonls.setup({ capabilities = caps })
-  lspconfig.clangd.setup({ capabilities = caps, cmd = { 'clangd', '--background-index=false' } })
-  
-  lspconfig.pyright.setup({
-    capabilities = caps,
-    settings = { 
-      python = { 
-        analysis = { 
-          autoSearchPaths = true, 
-          diagnosticMode = 'openFilesOnly',
-          typeCheckingMode = 'basic' 
-        } 
-      } 
-    }
-  })
+local caps = vim.lsp.protocol.make_client_capabilities()
+local cmp_lsp_ok, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
+if cmp_lsp_ok then
+  caps = vim.tbl_deep_extend('force', caps, cmp_nvim_lsp.default_capabilities())
 end
+
+-- v0.11 FEATURE: Set default capabilities for ALL servers dynamically
+vim.lsp.config('*', { capabilities = caps })
+
+-- 1. Lua
+vim.lsp.config('lua_ls', {
+  cmd = { 'lua-language-server' },
+  filetypes = { 'lua' },
+  settings = { Lua = { diagnostics = { globals = { 'vim' } } } }
+})
+if vim.fn.executable('lua-language-server') == 1 then vim.lsp.enable('lua_ls') end
+
+-- 2. Python (Pyright)
+vim.lsp.config('pyright', {
+  cmd = { 'pyright-langserver', '--stdio' },
+  filetypes = { 'python' },
+  settings = { python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly', typeCheckingMode = 'basic' } } }
+})
+if vim.fn.executable('pyright-langserver') == 1 then vim.lsp.enable('pyright') end
+
+-- 3. Web Dev (TypeScript / JS)
+vim.lsp.config('ts_ls', {
+  cmd = { 'typescript-language-server', '--stdio' },
+  filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+})
+if vim.fn.executable('typescript-language-server') == 1 then vim.lsp.enable('ts_ls') end
+
+-- 4. Clangd (C/C++)
+vim.lsp.config('clangd', {
+  cmd = { 'clangd', '--background-index=false' },
+  filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+})
+if vim.fn.executable('clangd') == 1 then vim.lsp.enable('clangd') end
 
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(event)
@@ -235,14 +238,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('<leader>rn', vim.lsp.buf.rename, 'Rename Variable')
     map('<leader>ca', vim.lsp.buf.code_action, 'Code Action')
     map('<leader>cd', vim.diagnostic.open_float, 'Code Diagnostic Popup')
-    map('[d', vim.diagnostic.goto_prev, 'Previous Diagnostic')
-    map(']d', vim.diagnostic.goto_next, 'Next Diagnostic')
     map('K', vim.lsp.buf.hover, 'Hover Documentation')
+
+    -- v0.11 FIX: goto_next/prev is deprecated. Used the new vim.diagnostic.jump()
+    map(']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, 'Next Diagnostic')
+    map('[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, 'Previous Diagnostic')
   end,
 })
 
 -- ------------------------------------------------------------------------
--- Auto-completion (Native Snippets)
+-- 10. AUTO-COMPLETION & AUTO-PAIRS
 -- ------------------------------------------------------------------------
 local cmp_ok, cmp = pcall(require, 'cmp')
 if cmp_ok then
@@ -261,7 +266,7 @@ local autopairs_ok, autopairs = pcall(require, 'nvim-autopairs')
 if autopairs_ok then autopairs.setup({ check_ts = true }) end
 
 -- ------------------------------------------------------------------------
--- Formatter: Prettier (with Cursor Position Saving)
+-- 11. FORMATTER: PRETTIER
 -- ------------------------------------------------------------------------
 local prettier_supported_fts = {
   javascript = true, javascriptreact = true, typescript = true, typescriptreact = true,
@@ -306,7 +311,6 @@ local function format_with_prettier(opts)
     if #new_lines > 0 and new_lines[#new_lines] == '' then table.remove(new_lines, #new_lines) end
     
     if table.concat(lines, '\n') ~= table.concat(new_lines, '\n') then
-      -- BUG FIX: Save cursor view so the screen doesn't jump wildly after formatting
       local view = vim.fn.winsaveview()
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
       vim.fn.winrestview(view)
