@@ -21,7 +21,7 @@ end
 
 vim.opt.shada = "'20,<50,s10,h"  -- Limit history file size to prevent slow startups
 vim.opt.synmaxcol = 200          -- Stop syntax highlighting on long lines (minified JS/CSS)
-vim.opt.updatetime = 500         -- Lower disk I/O, but keeps diagnostics responsive
+vim.opt.updatetime = 500         -- Lower disk I/O, keeps diagnostics responsive
 vim.opt.swapfile = false         -- Prevent continuous disk I/O
 
 -- ==========================================================================
@@ -103,7 +103,7 @@ vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
   end,
 })
 
--- Highlight Yanked Text (v0.11 FIX: using vim.highlight instead of vim.hl)
+-- Highlight Yanked Text
 vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function() vim.highlight.on_yank() end,
@@ -125,7 +125,7 @@ vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 
 -- ==========================================================================
--- 7. BARE MINIMUM PLUGINS (No Mason, No nvim-lspconfig)
+-- 7. BARE MINIMUM PLUGINS
 -- ==========================================================================
 vim.pack.add({
   'https://github.com/nvim-lua/plenary.nvim',
@@ -144,14 +144,22 @@ vim.pack.add({
 -- ==========================================================================
 -- 8. PLUGIN CONFIGURATION
 -- ==========================================================================
+
+-- Diagnostics & Git (v0.11 FIX: Future-proof enum indexing)
 vim.diagnostic.config({
-  signs = { text = { [1] = 'E', [2] = 'W', [3] = 'I', [4] = 'H' } },
+  signs = { text = { 
+    [vim.diagnostic.severity.ERROR] = 'E', 
+    [vim.diagnostic.severity.WARN]  = 'W', 
+    [vim.diagnostic.severity.INFO]  = 'I', 
+    [vim.diagnostic.severity.HINT]  = 'H' 
+  }},
   virtual_text = true, severity_sort = true, float = { border = 'rounded' },
 })
 
 local gitsigns_ok, gitsigns = pcall(require, 'gitsigns')
 if gitsigns_ok then gitsigns.setup({ signs = { add = { text = '┃' }, change = { text = '┃' } } }) end
 
+-- Treesitter (Syntax Highlighting)
 local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
 if treesitter_ok then
   treesitter_configs.setup({
@@ -174,6 +182,7 @@ if autotag_ok then autotag.setup({ opts = { enable_close = true } }) end
 local surround_ok, surround = pcall(require, 'mini.surround')
 if surround_ok then surround.setup() end
 
+-- Telescope (Fuzzy Finder)
 local telescope_ok, telescope = pcall(require, 'telescope')
 if telescope_ok then
   local previewers = require('telescope.previewers')
@@ -197,10 +206,9 @@ if cmp_lsp_ok then
   caps = vim.tbl_deep_extend('force', caps, cmp_nvim_lsp.default_capabilities())
 end
 
--- v0.11 FEATURE: Set default capabilities for ALL servers dynamically
+-- Set default capabilities globally for all native servers
 vim.lsp.config('*', { capabilities = caps })
 
--- 1. Lua
 vim.lsp.config('lua_ls', {
   cmd = { 'lua-language-server' },
   filetypes = { 'lua' },
@@ -208,7 +216,6 @@ vim.lsp.config('lua_ls', {
 })
 if vim.fn.executable('lua-language-server') == 1 then vim.lsp.enable('lua_ls') end
 
--- 2. Python (Pyright)
 vim.lsp.config('pyright', {
   cmd = { 'pyright-langserver', '--stdio' },
   filetypes = { 'python' },
@@ -216,14 +223,30 @@ vim.lsp.config('pyright', {
 })
 if vim.fn.executable('pyright-langserver') == 1 then vim.lsp.enable('pyright') end
 
--- 3. Web Dev (TypeScript / JS)
 vim.lsp.config('ts_ls', {
   cmd = { 'typescript-language-server', '--stdio' },
   filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
 })
 if vim.fn.executable('typescript-language-server') == 1 then vim.lsp.enable('ts_ls') end
 
--- 4. Clangd (C/C++)
+vim.lsp.config('html', {
+  cmd = { 'vscode-html-language-server', '--stdio' },
+  filetypes = { 'html' },
+})
+if vim.fn.executable('vscode-html-language-server') == 1 then vim.lsp.enable('html') end
+
+vim.lsp.config('cssls', {
+  cmd = { 'vscode-css-language-server', '--stdio' },
+  filetypes = { 'css', 'scss', 'less' },
+})
+if vim.fn.executable('vscode-css-language-server') == 1 then vim.lsp.enable('cssls') end
+
+vim.lsp.config('jsonls', {
+  cmd = { 'vscode-json-language-server', '--stdio' },
+  filetypes = { 'json', 'jsonc' },
+})
+if vim.fn.executable('vscode-json-language-server') == 1 then vim.lsp.enable('jsonls') end
+
 vim.lsp.config('clangd', {
   cmd = { 'clangd', '--background-index=false' },
   filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
@@ -238,9 +261,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('<leader>rn', vim.lsp.buf.rename, 'Rename Variable')
     map('<leader>ca', vim.lsp.buf.code_action, 'Code Action')
     map('<leader>cd', vim.diagnostic.open_float, 'Code Diagnostic Popup')
-    map('K', vim.lsp.buf.hover, 'Hover Documentation')
-
-    -- v0.11 FIX: goto_next/prev is deprecated. Used the new vim.diagnostic.jump()
     map(']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, 'Next Diagnostic')
     map('[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, 'Previous Diagnostic')
   end,
@@ -262,11 +282,18 @@ if cmp_ok then
   })
 end
 
+-- v0.11 FIX: Link Autopairs back to CMP so functions autocomplete with `()`
 local autopairs_ok, autopairs = pcall(require, 'nvim-autopairs')
-if autopairs_ok then autopairs.setup({ check_ts = true }) end
+if autopairs_ok then 
+  autopairs.setup({ check_ts = true }) 
+  local cmp_autopairs_ok, cmp_autopairs = pcall(require, 'nvim-autopairs.completion.cmp')
+  if cmp_autopairs_ok and cmp_ok then
+    cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+  end
+end
 
 -- ------------------------------------------------------------------------
--- 11. FORMATTER: PRETTIER
+-- 11. FORMATTER (Prettier + LSP Fallback)
 -- ------------------------------------------------------------------------
 local prettier_supported_fts = {
   javascript = true, javascriptreact = true, typescript = true, typescriptreact = true,
@@ -296,10 +323,7 @@ local function format_with_prettier(opts)
   end
 
   local prettier = get_prettier_bin()
-  if not prettier then 
-    if not opts.silent then vim.notify('Prettier not found globally (npm i -g prettier)', vim.log.levels.WARN) end
-    return false 
-  end
+  if not prettier then return false end
 
   local args = { prettier, '--stdin-filepath', filepath ~= '' and filepath or 'dummy.' .. ft }
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -309,7 +333,6 @@ local function format_with_prettier(opts)
   if res.code == 0 and res.stdout and #res.stdout > 0 then
     local new_lines = vim.split(res.stdout, '\n', { plain = true })
     if #new_lines > 0 and new_lines[#new_lines] == '' then table.remove(new_lines, #new_lines) end
-    
     if table.concat(lines, '\n') ~= table.concat(new_lines, '\n') then
       local view = vim.fn.winsaveview()
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
@@ -320,20 +343,26 @@ local function format_with_prettier(opts)
   return false
 end
 
-vim.g.format_with_prettier = format_with_prettier
 vim.g.prettier_autoformat = true
 
-vim.keymap.set('n', '<leader>cp', function() format_with_prettier({ force = true, silent = false }) end, { desc = '[C]ode [P]rettier Format' })
+-- v0.11 FIX: Unified Universal Formatting! (Tries Prettier, falls back to LSP)
+vim.keymap.set('n', '<leader>cf', function() 
+  if not format_with_prettier({ silent = true }) then
+    vim.lsp.buf.format({ async = true })
+  end
+end, { desc = '[C]ode [F]ormat (Universal)' })
+
 vim.keymap.set('n', '<leader>tp', function()
   vim.g.prettier_autoformat = not vim.g.prettier_autoformat
   vim.notify('Prettier auto-format ' .. (vim.g.prettier_autoformat and 'ON' or 'OFF'))
-end, { desc = 'Toggle auto-format' })
+end, { desc = '[T]oggle format-on-save' })
 
 vim.api.nvim_create_autocmd('BufWritePre', {
-  desc = 'Auto-format buffer with Prettier on save',
+  desc = 'Auto-format buffer on save',
   group = vim.api.nvim_create_augroup('kickstart-format-on-save', { clear = true }),
   callback = function(event)
     if vim.g.prettier_autoformat then
+      -- Attempt prettier. If it returns false (e.g. unsupported C++ file), do nothing.
       format_with_prettier({ bufnr = event.buf, silent = true })
     end
   end,
