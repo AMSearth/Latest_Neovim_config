@@ -27,10 +27,10 @@ vim.opt.swapfile = false         -- Prevent continuous disk I/O
 -- ==========================================================================
 -- 3. THEME & TRANSPARENCY
 -- ==========================================================================
-vim.cmd.colorscheme('habamax')
-
 -- Force transparent background (Main UI only, so floating popups remain readable)
+local theme_augroup = vim.api.nvim_create_augroup('potato-theme', { clear = true })
 vim.api.nvim_create_autocmd("ColorScheme", {
+  group = theme_augroup,
   pattern = "*",
   callback = function()
     local transparent_groups = { "Normal", "NormalNC", "SignColumn", "LineNr", "EndOfBuffer" }
@@ -39,7 +39,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     end
   end,
 })
-vim.cmd.colorscheme('habamax') -- Trigger the transparency patch
+vim.cmd.colorscheme('habamax') -- Apply theme with transparency patch
 
 -- ==========================================================================
 -- 4. BASIC SETTINGS & ERGONOMICS
@@ -89,17 +89,34 @@ vim.keymap.set('n', '<leader>e', '<cmd>Lexplore<CR>', { desc = 'Toggle File [E]x
 -- ==========================================================================
 
 -- Security: Prevent saving undo history for sensitive credentials
+local security_augroup = vim.api.nvim_create_augroup('potato-security', { clear = true })
 vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
+  group = security_augroup,
   desc = 'Disable persistent undo & swap for sensitive files',
   pattern = { '/tmp/*', '/dev/shm/*', '*.env', '*.env.*', '*.secret', '*.pem', '*.key', 'id_rsa*' },
   callback = function() vim.opt_local.undofile = false end,
 })
 
 -- Auto-refresh buffers when files are changed outside Neovim (e.g., git checkout)
+local buffer_augroup = vim.api.nvim_create_augroup('potato-buffer-refresh', { clear = true })
 vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
+  group = buffer_augroup,
   desc = 'Check if buffers changed on disk',
   callback = function()
-    if vim.o.buftype ~= 'nofile' then vim.cmd('checktime') end
+    if vim.bo.buftype ~= 'nofile' and vim.bo.buftype ~= 'terminal' then
+      vim.cmd('checktime')
+    end
+  end,
+})
+
+-- Close helper/floating windows instantly with 'q' (README keybinding)
+local helper_augroup = vim.api.nvim_create_augroup('potato-helper-windows', { clear = true })
+vim.api.nvim_create_autocmd('FileType', {
+  group = helper_augroup,
+  desc = 'Close helper windows with q',
+  pattern = { 'help', 'netrw', 'qf', 'checkhealth', 'lspinfo' },
+  callback = function(event)
+    vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true, nowait = true })
   end,
 })
 
@@ -113,7 +130,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- 6. KEYMAPS
 -- ==========================================================================
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlights' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix / location list' })
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus left' })
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus right' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus down' })
@@ -157,7 +174,38 @@ vim.diagnostic.config({
 })
 
 local gitsigns_ok, gitsigns = pcall(require, 'gitsigns')
-if gitsigns_ok then gitsigns.setup({ signs = { add = { text = '┃' }, change = { text = '┃' } } }) end
+if gitsigns_ok then
+  gitsigns.setup({
+    signs = { add = { text = '┃' }, change = { text = '┃' } },
+    on_attach = function(bufnr)
+      local map = function(mode, l, r, opts)
+        opts = opts or {}
+        opts.buffer = bufnr
+        vim.keymap.set(mode, l, r, opts)
+      end
+
+      -- Navigation between Git hunks
+      map('n', ']c', function()
+        if vim.wo.diff then return ']c' end
+        vim.schedule(function() gitsigns.nav_hunk('next') end)
+        return '<Ignore>'
+      end, { expr = true, desc = 'Next Git change (hunk)' })
+
+      map('n', '[c', function()
+        if vim.wo.diff then return '[c' end
+        vim.schedule(function() gitsigns.nav_hunk('prev') end)
+        return '<Ignore>'
+      end, { expr = true, desc = 'Previous Git change (hunk)' })
+
+      -- Git Hunk Actions
+      map('n', '<leader>hp', gitsigns.preview_hunk, { desc = 'Preview Git hunk' })
+      map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'Stage Git hunk' })
+      map('n', '<leader>hr', gitsigns.reset_hunk, { desc = 'Reset (undo) Git hunk' })
+      map('v', '<leader>hs', function() gitsigns.stage_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end, { desc = 'Stage Git hunk' })
+      map('v', '<leader>hr', function() gitsigns.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end, { desc = 'Reset Git hunk' })
+    end,
+  })
+end
 
 -- Treesitter (Syntax Highlighting)
 local treesitter_ok, treesitter_configs = pcall(require, 'nvim-treesitter.configs')
@@ -189,7 +237,8 @@ if telescope_ok then
   local safe_previewer_maker = function(filepath, bufnr, opts)
     filepath = vim.fn.expand(filepath)
     local stat = (vim.uv or vim.loop).fs_stat(filepath)
-    if stat and stat.size < 100000 then previewers.buffer_previewer_maker(filepath, bufnr, opts) end
+    if stat and stat.size > 100000 then return end
+    previewers.buffer_previewer_maker(filepath, bufnr, opts)
   end
   telescope.setup({ defaults = { buffer_previewer_maker = safe_previewer_maker, file_ignore_patterns = { '%.git/', 'node_modules/.*' } } })
   local builtin = require('telescope.builtin')
@@ -206,12 +255,16 @@ if cmp_lsp_ok then
   caps = vim.tbl_deep_extend('force', caps, cmp_nvim_lsp.default_capabilities())
 end
 
--- Set default capabilities globally for all native servers
-vim.lsp.config('*', { capabilities = caps })
+-- Set default capabilities and root markers globally for all native servers
+vim.lsp.config('*', {
+  capabilities = caps,
+  root_markers = { '.git' },
+})
 
 vim.lsp.config('lua_ls', {
   cmd = { 'lua-language-server' },
   filetypes = { 'lua' },
+  root_markers = { '.luarc.json', '.luarc.jsonc', '.git' },
   settings = { Lua = { diagnostics = { globals = { 'vim' } } } }
 })
 if vim.fn.executable('lua-language-server') == 1 then vim.lsp.enable('lua_ls') end
@@ -219,6 +272,7 @@ if vim.fn.executable('lua-language-server') == 1 then vim.lsp.enable('lua_ls') e
 vim.lsp.config('pyright', {
   cmd = { 'pyright-langserver', '--stdio' },
   filetypes = { 'python' },
+  root_markers = { 'pyproject.toml', 'setup.py', 'setup.cfg', 'requirements.txt', 'Pipfile', '.git' },
   settings = { python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly', typeCheckingMode = 'basic' } } }
 })
 if vim.fn.executable('pyright-langserver') == 1 then vim.lsp.enable('pyright') end
@@ -226,43 +280,53 @@ if vim.fn.executable('pyright-langserver') == 1 then vim.lsp.enable('pyright') e
 vim.lsp.config('ts_ls', {
   cmd = { 'typescript-language-server', '--stdio' },
   filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+  root_markers = { 'tsconfig.json', 'package.json', 'jsconfig.json', '.git' },
 })
 if vim.fn.executable('typescript-language-server') == 1 then vim.lsp.enable('ts_ls') end
 
 vim.lsp.config('html', {
   cmd = { 'vscode-html-language-server', '--stdio' },
   filetypes = { 'html' },
+  root_markers = { 'package.json', '.git' },
 })
 if vim.fn.executable('vscode-html-language-server') == 1 then vim.lsp.enable('html') end
 
 vim.lsp.config('cssls', {
   cmd = { 'vscode-css-language-server', '--stdio' },
   filetypes = { 'css', 'scss', 'less' },
+  root_markers = { 'package.json', '.git' },
 })
 if vim.fn.executable('vscode-css-language-server') == 1 then vim.lsp.enable('cssls') end
 
 vim.lsp.config('jsonls', {
   cmd = { 'vscode-json-language-server', '--stdio' },
   filetypes = { 'json', 'jsonc' },
+  root_markers = { 'package.json', '.git' },
 })
 if vim.fn.executable('vscode-json-language-server') == 1 then vim.lsp.enable('jsonls') end
 
 vim.lsp.config('clangd', {
   cmd = { 'clangd', '--background-index=false' },
   filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+  root_markers = { '.clangd', 'compile_commands.json', 'compile_flags.txt', '.git' },
 })
 if vim.fn.executable('clangd') == 1 then vim.lsp.enable('clangd') end
 
+local lsp_augroup = vim.api.nvim_create_augroup('potato-lsp-attach', { clear = true })
 vim.api.nvim_create_autocmd('LspAttach', {
+  group = lsp_augroup,
   callback = function(event)
-    local map = function(keys, func, desc) vim.keymap.set('n', keys, func, { buffer = event.buf, desc = desc }) end
-    map('gd', vim.lsp.buf.definition, 'Goto Definition')
-    map('gr', vim.lsp.buf.references, 'Goto References')
-    map('<leader>rn', vim.lsp.buf.rename, 'Rename Variable')
-    map('<leader>ca', vim.lsp.buf.code_action, 'Code Action')
-    map('<leader>cd', vim.diagnostic.open_float, 'Code Diagnostic Popup')
-    map(']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, 'Next Diagnostic')
-    map('[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, 'Previous Diagnostic')
+    local map = function(mode, keys, func, desc)
+      vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = desc })
+    end
+    map('n', 'gd', vim.lsp.buf.definition, 'Goto Definition')
+    map('n', 'gr', vim.lsp.buf.references, 'Goto References')
+    map('n', 'K', vim.lsp.buf.hover, 'Hover Documentation')
+    map('n', '<leader>rn', vim.lsp.buf.rename, 'Rename Variable')
+    map({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, 'Code Action')
+    map('n', '<leader>cd', vim.diagnostic.open_float, 'Code Diagnostic Popup')
+    map('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, 'Next Diagnostic')
+    map('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, 'Previous Diagnostic')
   end,
 })
 
@@ -278,7 +342,11 @@ if cmp_ok then
       ['<C-p>'] = cmp.mapping.select_prev_item(),
       ['<C-y>'] = cmp.mapping.confirm({ select = true }),
     }),
-    sources = { { name = 'nvim_lsp' }, { name = 'buffer', keyword_length = 3 } },
+    sources = {
+      { name = 'nvim_lsp' },
+      { name = 'path' },
+      { name = 'buffer', keyword_length = 3 },
+    },
   })
 end
 
@@ -325,7 +393,8 @@ local function format_with_prettier(opts)
   local prettier = get_prettier_bin()
   if not prettier then return false end
 
-  local args = { prettier, '--stdin-filepath', filepath ~= '' and filepath or 'dummy.' .. ft }
+  local stdin_path = filepath ~= '' and filepath or (ft ~= '' and ('dummy.' .. ft) or 'dummy.txt')
+  local args = { prettier, '--stdin-filepath', stdin_path }
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local input = table.concat(lines, '\n')
 
@@ -334,9 +403,10 @@ local function format_with_prettier(opts)
     local new_lines = vim.split(res.stdout, '\n', { plain = true })
     if #new_lines > 0 and new_lines[#new_lines] == '' then table.remove(new_lines, #new_lines) end
     if table.concat(lines, '\n') ~= table.concat(new_lines, '\n') then
-      local view = vim.fn.winsaveview()
+      local is_current = (bufnr == vim.api.nvim_get_current_buf())
+      local view = is_current and vim.fn.winsaveview() or nil
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-      vim.fn.winrestview(view)
+      if view then vim.fn.winrestview(view) end
     end
     return true
   end
@@ -345,12 +415,19 @@ end
 
 vim.g.prettier_autoformat = true
 
--- v0.11 FIX: Unified Universal Formatting! (Tries Prettier, falls back to LSP)
+-- Unified Universal Formatting (Tries Prettier, falls back to LSP)
 vim.keymap.set('n', '<leader>cf', function() 
   if not format_with_prettier({ silent = true }) then
     vim.lsp.buf.format({ async = true })
   end
 end, { desc = '[C]ode [F]ormat (Universal)' })
+
+-- Formatter shortcut alias matching README (<leader>cp)
+vim.keymap.set('n', '<leader>cp', function() 
+  if not format_with_prettier({ silent = true, force = true }) then
+    vim.lsp.buf.format({ async = true })
+  end
+end, { desc = '[C]ode [P]rettier format' })
 
 vim.keymap.set('n', '<leader>tp', function()
   vim.g.prettier_autoformat = not vim.g.prettier_autoformat
